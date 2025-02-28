@@ -4,10 +4,17 @@ Cost Grouping tool for work with Docker support.
 ## Getting Started
 
 ### Clone the Repository
+
+You can clone the repository using Git:
 ```sh
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+git clone https://github.com/TanzimCodes/cost-grouping-tool.git
 ```
+Or download the ZIP file from the repository.
+
+### Install Docker on your machine
+Ensure Docker is installed on your machine. You can download it here:
+[Docker Installation Guide](https://www.docker.com/)
+
 
 ### Build the Docker Image
 ```sh
