@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cost Grouping Tool</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS (Optional) -->
+    <style>
+        .container {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1 class="text-center">Cost Grouping Tool</h1>
+        <div class="row">
+            <!-- First Row: Start Date, End Date, Tag, Linked Account, Region -->
+            <div class="col-md-2">
+                <label for="start-date" class="form-label">Start Date</label>
+                <input type="date" id="start-date" class="form-control" value="2024-09-01">
+            </div>
+            <div class="col-md-2">
+                <label for="end-date" class="form-label">End Date</label>
+                <input type="date" id="end-date" class="form-control" value="2024-10-01">
+            </div>
+            <div class="col-md-2">
+                <label for="tag" class="form-label">Dept Tag Value</label>
+                <select id="tag" class="form-select">
+                    <!-- Options will be added via JS -->
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="linked-account" class="form-label">Linked Account</label>
+                <select id="linked-account" class="form-select">
+                    <!-- Options will be added via JS -->
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="region" class="form-label">Region</label>
+                <select id="region" class="form-select">
+                    <!-- Options will be added via JS -->
+                </select>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <!-- Second Row: Group By Dimension, Group By Tag -->
+            <div class="col-md-3">
+                <label for="group-by-dimension" class="form-label">Group By Dimension</label>
+                <select id="group-by-dimension" class="form-select" required>
+                    <!-- Options will be added via JS -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="group-by-tag" class="form-label">Group By Tag Type</label>
+                <select id="group-by-tag" class="form-select">
+                    <!-- Options will be added via JS -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="group-by-dimension-2" class="form-label">Group By Dimension</label>
+                <select id="group-by-dimension-2" class="form-select" required>
+                    <!-- Options will be added via JS -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="group-by-tag-2" class="form-label">Group By Tag Type</label>
+                <select id="group-by-tag-2" class="form-select">
+                    <!-- Options will be added via JS -->
+                </select>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <!-- Button to call API -->
+            <div class="col-md-12 text-center">
+                <button id="fetch-data" class="btn btn-primary">Fetch Data</button>
+            </div>
+        </div>
+
+
+        <!-- Spinner to show during fetch -->
+        <div class="d-flex justify-content-center">
+            <div id="loading-spinner" class="spinner-border text-primary" role="status" style="display: none;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <table class="table table-bordered table-striped table-hover">
+                    <thead id="table-header" class="sticky-header">
+                        <tr>
+                            <th>Month</th>
+                            <th id="group-1">Group 1</th>
+                            <th id="group-2">Group 2</th>
+                            <th>Cost (USD)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-table">
+                        <!-- Results will be added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+
+        <!-- Toast container for error messages -->
+        <div id="toast-container" aria-live="assertive" aria-atomic="true"
+            class="position-fixed top-50 start-50 translate-middle p-3">
+            <div id="error-toast" class="toast align-items-center text-bg-danger" role="alert" aria-live="assertive"
+                aria-atomic="true" data-bs-delay="1000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        Please select at least one "Group By" option.
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                        aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom CSS for Sticky Header -->
+        <style>
+            .sticky-header {
+                position: sticky;
+                top: 0;
+                /* Stick the header to the top of the page */
+                z-index: 1020;
+                /* Ensure it stays above other content */
+                background-color: #fff;
+                /* Background color to make it visible */
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                /* Optional: Add shadow for better visibility */
+            }
+
+            /* Custom CSS for Spinner */
+            #loading-spinner {
+                display: none;
+                /* Initially hidden */
+                margin-top: 5px;
+            }
+        </style>
+
+
+        <!-- Bootstrap JS and Custom JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="drop-down.js"></script>
+        <script src="script.js"></script>
+</body>
+
+</html>
