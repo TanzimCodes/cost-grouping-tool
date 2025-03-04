@@ -70,6 +70,10 @@ tags = [
   "tcgd"
 ];
 
+const savedQuery = [
+  { 'name': 'LabVantage', value: 'LINKED_ACCOUNT' }
+]
+
 const linkedAccounts = [
   { name: 'AWS Administrator', value: '184212008666' },
   { name: 'CustomerWebsite', value: '945899788175' },
@@ -186,3 +190,6 @@ populateDropdown('group-by-tag', groupByTags);
 
 populateDropdown('group-by-dimension-2', groupByDimensions);
 populateDropdown('group-by-tag-2', groupByTags);
+
+populateDropdown('saved-query', savedQuery);
+

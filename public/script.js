@@ -1,7 +1,5 @@
 
 document.getElementById('fetch-data').addEventListener('click', () => {
-  // Show the loading spinner
-  document.getElementById('loading-spinner').style.display = 'inline-block';
 
   const startDate = document.getElementById('start-date').value;
   const endDate = document.getElementById('end-date').value;
@@ -13,61 +11,121 @@ document.getElementById('fetch-data').addEventListener('click', () => {
   const groupByDimension2 = document.getElementById('group-by-dimension-2').value;
   const groupByTag2 = document.getElementById('group-by-tag-2').value;
 
+  const savedQuery = document.getElementById('saved-query').value;
+
+
+  const params = {
+    startDate,
+    endDate
+  }
+
+  if (savedQuery) {
+    params.groupByDimension = savedQuery;
+    executeSavedQuery(params)
+  } else {
+    params.tag = selectedTag;
+    params.linkedAccount = selectedLinkedAccount;
+    params.region = selectedRegion;
+    params.groupByDimension = groupByDimension;
+    params.groupByTag = groupByTag;
+    params.groupByDimension2 = groupByDimension2;
+    params.groupByTag2 = groupByTag2;
+    executeNormalQuery(params)
+  }
+
+});
+
+async function executeNormalQuery(params) {
+
   // Count the number of truthy groupBy values
-  const groupByCount = [groupByDimension, groupByTag, groupByDimension2, groupByTag2].filter(Boolean).length;
+  const groupByCount = [params.groupByDimension, params.groupByTag, params.groupByDimension2, params.groupByTag2].filter(Boolean).length;
 
   const toastBody = document.querySelector("#error-toast .toast-body");
 
   if (groupByCount < 1) {
     toastBody.textContent = "Please select at least one 'Group By' option.";
     showToast();
-    hideSpinner();
     return;
   }
 
   if (groupByCount > 2) {
     toastBody.textContent = "At most 2 'Group By' values can be selected.";
     showToast();
-    hideSpinner();
     return;
   }
 
-  const postData = transformDropDownValues({
-    startDate,
-    endDate,
-    tag: selectedTag,
-    linkedAccount: selectedLinkedAccount,
-    region: selectedRegion,
-    groupByDimension,
-    groupByTag,
-    groupByDimension2,
-    groupByTag2
-  });
 
-  fetch('http://localhost:3001/get-data', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(postData),
-  })
-  .then(response => {
+  showSpinner();
+
+  const requestParams = transformDropDownValues(params)
+
+  try {
+    // Call the fetchData function to get the data
+    const data = await fetchData(requestParams);
+    const tableData = transformApiData(data)
+    updateTable(tableData)
+
+  } catch (error) {
+    const toastBody = document.querySelector("#error-toast .toast-body");
+    toastBody.textContent = "An error occurred while fetching data.";
+    showToast();
+  } finally {
+    hideSpinner(); // Hide the spinner regardless of success or error
+  }
+}
+
+async function executeSavedQuery(params) {
+
+  showSpinner();
+
+  const requestParams = transformDropDownValues(params)
+
+  try {
+    // Call the fetchData function to get the data
+    const apiData = await fetchData(requestParams);
+    const tableData = transformApiData(apiData)
+    const { dimensionValueAttributes } = tableData;
+    console.log('before', tableData.data)
+    tableData.data = tableData.data.filter(item =>
+      !dimensionValueAttributes[item.group1].startsWith('spot-eco')
+      && !dimensionValueAttributes[item.group1].startsWith('Strategic')
+      && !dimensionValueAttributes[item.group1].startsWith('AWS Administrator')
+    )
+    console.log('after', tableData.data)
+
+    updateTable(tableData)
+
+  } catch (error) {
+    const toastBody = document.querySelector("#error-toast .toast-body");
+    toastBody.textContent = "An error occurred while fetching data.";
+    showToast();
+    console.log(error)
+  } finally {
+    hideSpinner(); // Hide the spinner regardless of success or error
+  }
+
+}
+
+async function fetchData(postData) {
+  try {
+    const response = await fetch('http://localhost:3001/get-data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(postData),
+    });
+
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
-    return response.json();
-  })
-  .then(data => {
-    updateTable(transformApiData(data));
-    hideSpinner(); // Hide spinner after successful response
-  })
-  .catch(error => {
-    console.error('There was a problem with the fetch operation:', error);
-    toastBody.textContent = "An error occurred while fetching data.";
-    showToast();
-    hideSpinner(); // Hide spinner on error
-  });
-});
+
+    // Return the parsed JSON data directly
+    return await response.json();
+  } catch (error) {
+    throw error; // Rethrow error to allow further handling if needed
+  }
+}
 
 
 
@@ -155,8 +213,7 @@ function transformDropDownValues(requestData) {
 
 
 // Update table with response data
-function updateTable({ headerValues, data }) {
-  console.log(headerValues)
+function updateTable({ headerValues, data, dimensionValueAttributes }) {
   // Directly update Group 1 and Group 2 headers
   document.getElementById('group-1').textContent = headerValues[0] || 'Group 1';
   document.getElementById('group-2').textContent = headerValues[1] || 'Group 2';
@@ -164,13 +221,13 @@ function updateTable({ headerValues, data }) {
   // Populate the table body
   const tableBody = document.getElementById('results-table');
   tableBody.innerHTML = ''; // Clear previous results
-
+  console.log('size ', data.length)
   data.forEach(item => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${item.month}</td>
-      <td>${item.group1}</td>
-      <td>${item.group2}</td>
+      <td>${headerValues[0] === 'LINKED_ACCOUNT' ? `${item.group1} (${dimensionValueAttributes[item.group1]})` : item.group1}</td>
+      <td>${headerValues[1] === 'LINKED_ACCOUNT' ? `${item.group2} (${dimensionValueAttributes[item.group2]})` : item.group2}</td>
       <td>${item.cost}</td>
     `;
     tableBody.appendChild(row);
@@ -182,7 +239,9 @@ function updateTable({ headerValues, data }) {
 
 // Function to transform the API response into a format suitable for the table
 function transformApiData(apiData) {
+  const dimensionValueAttributes = {}
 
+  //for linked accounts
   const results = apiData.ResultsByTime;
   let transformedData = [];
   let headerValues = [];
@@ -196,6 +255,10 @@ function transformApiData(apiData) {
     headerValues.push(def.Key); // Use the 'Key' from GroupDefinitions as the column header
   });
   // }
+
+  apiData.DimensionValueAttributes.forEach(item => {
+    dimensionValueAttributes[item.Value] = item.Attributes.description
+  })
 
   results.forEach(result => {
     const groups = result.Groups;
@@ -218,19 +281,18 @@ function transformApiData(apiData) {
 
 
   });
-  console.log("Header", headerValues)
 
   // Return both the header values and transformed data
   return {
     headerValues: headerValues,
-    data: transformedData
+    data: transformedData,
+    dimensionValueAttributes
   };
 }
 
 function getMonthYear(dateString) {
 
   const [year, month] = dateString.split('-');
-  console.log(year, month)
 
   // Create a Date object using the UTC format
   const date = new Date(Date.UTC(year, month)); // Month is zero-indexed
@@ -269,4 +331,8 @@ function showToast() {
 
 function hideSpinner() {
   document.getElementById('loading-spinner').style.display = 'none'; // Hide the spinner
+}
+
+function showSpinner() {
+  document.getElementById('loading-spinner').style.display = 'inline-block';
 }
