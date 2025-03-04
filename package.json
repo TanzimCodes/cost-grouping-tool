@@ -13,6 +13,7 @@
   "dependencies": {
     "@aws-sdk/client-cost-explorer": "^3.750.0",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "supervisord": "^0.1.0"
   }
 }
