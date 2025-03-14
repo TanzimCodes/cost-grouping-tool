@@ -1,3 +1,19 @@
+const exportButton = document.getElementById('export');
+let currentData = []
+
+exportButton.addEventListener('click', () => {
+  // Convert the data to CSV using Papa Parse
+  const csv = Papa.unparse(currentData);
+
+  // Create a temporary link to download the CSV file
+  const link = document.createElement('a');
+  link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  link.target = '_blank';
+  link.download = 'exported-data.csv';
+
+  // Programmatically trigger the download
+  link.click();
+})
 
 document.getElementById('fetch-data').addEventListener('click', () => {
 
@@ -10,6 +26,7 @@ document.getElementById('fetch-data').addEventListener('click', () => {
   const groupByTag = document.getElementById('group-by-tag').value;
   const groupByDimension2 = document.getElementById('group-by-dimension-2').value;
   const groupByTag2 = document.getElementById('group-by-tag-2').value;
+
 
   const savedQuery = document.getElementById('saved-query').value;
 
@@ -63,11 +80,15 @@ async function executeNormalQuery(params) {
     // Call the fetchData function to get the data
     const data = await fetchData(requestParams);
     const tableData = transformApiData(data)
-    updateTable(tableData)
+    currentData = tableData.data;
+
+    // updateTable(tableData)
+    updateTableWithAGGrid(tableData)
 
   } catch (error) {
     const toastBody = document.querySelector("#error-toast .toast-body");
     toastBody.textContent = "An error occurred while fetching data.";
+    console.log(error)
     showToast();
   } finally {
     hideSpinner(); // Hide the spinner regardless of success or error
@@ -108,7 +129,7 @@ async function executeSavedQuery(params) {
 
 async function fetchData(postData) {
   try {
-    const response = await fetch('http://localhost:3001/get-data', {
+    const response = await fetch('https://localhost:443/get-data', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -213,26 +234,82 @@ function transformDropDownValues(requestData) {
 
 
 // Update table with response data
-function updateTable({ headerValues, data, dimensionValueAttributes }) {
-  // Directly update Group 1 and Group 2 headers
-  document.getElementById('group-1').textContent = headerValues[0] || 'Group 1';
-  document.getElementById('group-2').textContent = headerValues[1] || 'Group 2';
+function updateTableWithTabulator({ headerValues, data, dimensionValueAttributes }) {
 
-  // Populate the table body
-  const tableBody = document.getElementById('results-table');
-  tableBody.innerHTML = ''; // Clear previous results
-  console.log('size ', data.length)
-  data.forEach(item => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${item.month}</td>
-      <td>${headerValues[0] === 'LINKED_ACCOUNT' ? `${item.group1} (${dimensionValueAttributes[item.group1]})` : item.group1}</td>
-      <td>${headerValues[1] === 'LINKED_ACCOUNT' ? `${item.group2} (${dimensionValueAttributes[item.group2]})` : item.group2}</td>
-      <td>${item.cost}</td>
-    `;
-    tableBody.appendChild(row);
-  });
+  // Prepare data for Tabulator
+  const formattedData = data.map(item => ({
+    month: item.month,
+    group1: item.group1,
+    group2: item.group2,
+    cost: item.cost
+  }));
+
+  // Define column definitions for AG Grid
+  const columnDefs = [
+    { headerName: "Month", field: "month" },
+    { headerName: headerValues[0] || 'Group 1', field: "group1" },
+    { headerName: headerValues[1] || 'Group 2', field: "group2" },
+    { headerName: "Cost (USD)", field: "cost", valueFormatter: params => `$${params.value.toFixed(2)}` }
+  ];
+
+  // Check if Tabulator is already initialized
+  if (window.tabulatorInstance) {
+    // If it is, update the data
+    window.tabulatorInstance.setData(formattedData);
+  } else {
+    // If not, initialize Tabulator
+    window.tabulatorInstance = new Tabulator("#tabulator-table", {
+      data: formattedData, // Set the initial data
+      columns: columnDefs,
+      pagination: "local", // Enable pagination
+      paginationSize: 30, // Number of rows per page
+      paginationSizeSelector: [10, 30, 50], // Options for pagination size
+      layout: "fitColumns", // Automatically adjust column width to fit content
+      tooltips: true, // Show tooltips for cells
+      responsiveLayout: "hide", // Hide columns on smaller screens
+      initialSort: [
+        { column: "month", dir: "asc" }
+      ], // Optional: Sort by month
+      stickyHeader: true
+    });
+  }
 }
+
+function updateTableWithAGGrid({ headerValues, data, dimensionValueAttributes }) {
+
+  // Define column definitions for AG Grid
+  const columnDefs = [
+    { headerName: "Month", field: "month" },
+    { headerName: headerValues[0] || 'Group 1', field: headerValues[0], filter: true },
+    { headerName: headerValues[1] || 'Group 2', field: headerValues[1], filter: true },
+    { headerName: "Cost (USD)", field: "cost", filter: true }
+  ];
+
+  // Check if AG Grid is already initialized
+  if (window.grid) {
+    // If AG Grid is initialized, update the data
+    window.grid.setGridOption('rowData', data);
+    window.grid.setGridOption('columnDefs', columnDefs);
+
+  } else {
+    // If not, initialize AG Grid
+    const gridOptions = {
+      columnDefs: columnDefs, // Set the column definitions
+      rowData: data, // Set the data
+      pagination: true, // Enable pagination
+      paginationPageSize: 30, // Set default number of rows per page
+      paginationPageSizeSelector: [10, 30, 50], // Options for pagination size
+    };
+
+    // Initialize AG Grid
+
+    window.grid = agGrid.createGrid(document.getElementById("myGrid"), gridOptions);
+    window.grid.sizeColumnsToFit();
+    console.log(window.grid)
+  }
+}
+
+
 
 
 
@@ -266,18 +343,23 @@ function transformApiData(apiData) {
     // const month = new Date(result.TimePeriod.Start).toLocaleString('default', { month: 'long', year: 'numeric' }); // Get the full month and year
 
     groups.forEach(group => {
-      const group1 = processTagKey(group.Keys[0], apiData.GroupDefinitions); // Process the first key (Group 1)
-      const group2 = group.Keys[1] ? processTagKey(group.Keys[1], apiData.GroupDefinitions) : ''; // Process the second key (Group 2), if exists
+      let group1 = processTagKey(group.Keys[0], apiData.GroupDefinitions); // Process the first key (Group 1)
+      let group2 = group.Keys[1] ? processTagKey(group.Keys[1], apiData.GroupDefinitions) : ''; // Process the second key (Group 2), if exists
       const cost = group.Metrics.NetUnblendedCost.Amount; // Extract the cost
       const monthYear = getMonthYear(result.TimePeriod.Start)
       // Push transformed data into the result array
+
+      group1 = headerValues[0] === 'LINKED_ACCOUNT' ? `${group1} (${dimensionValueAttributes[group1]})` : group1;
+      group2 = headerValues[1] === 'LINKED_ACCOUNT' ? `${group2} (${dimensionValueAttributes[group2]})` : group2;
+
       transformedData.push({
         month: monthYear,
-        group1: group1,
-        group2: group2,
-        cost: cost // Convert cost to a number
+        [headerValues[0]]: group1,
+        [headerValues[1]]: group2,
+        cost: Number(cost) // Convert cost to a number
       });
     });
+    // group1: headerValues[0] === 'LINKED_ACCOUNT'? `${group1} (${dimensionValueAttributes[group1]})`: group1,
 
 
   });
