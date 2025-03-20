@@ -1,10 +1,9 @@
 
-
 function resetVales() {
     originalData = []; // To store the original data (before processing)
     processedData = []; // To store the transformed data
     comparedData = []; // To store the compared data (original vs processed)
-    currentData = []; // This will track the currently displayed data (original, processed, or compared)
+    currentData = { type: '', data: [] }; // This will track the currently displayed data (original, processed, or compared)
 }
 
 
@@ -15,12 +14,11 @@ function handleFileSelect(event) {
     // Get the selected option value (either "aws" or "other")
     const selectedAccType = getSelectedAccountType();
 
-    //TODO : Uncomment after giving to mike
-    // if (selectedAccType === 'other' && !getToken()) {
-    //     event.target.value = ''; // Clear the file input
-    //     alert('Login first')
-    //     return
-    // }
+    if (selectedAccType === 'other' && !getToken()) {
+        event.target.value = '';
+        alert('Login first')
+        return
+    }
 
 
     const file = event.target.files[0];
@@ -37,39 +35,12 @@ function handleFileSelect(event) {
 
 }
 
-// Function to create the comparison row (old -> new format)
-function createComparisonRow(originalRow, processedRow) {
-    let comparisonRow = {};
-    let hasChanges = false;  // Flag to track if there are any differences
-
-    // Iterate over all keys in the original row
-    for (let key in originalRow) {
-        let originalValue = originalRow[key];
-        let processedValue = processedRow[key];
-
-        // If there's a difference, store it in "old -> new" format
-        if (originalValue !== processedValue) {
-            comparisonRow[key] = `${originalValue === '' ? null : originalValue} -> ${processedValue}`;
-            hasChanges = true;  // Mark that there are changes
-        } else {
-            // If no change, store the original value as is for comparison
-            comparisonRow[key] = originalValue;
-        }
-    }
-
-    //We would like to ignore dates
-    delete comparisonRow["Date"];
-    delete comparisonRow[""];
-
-
-    // Return the comparison row only if there were any changes
-    // return hasChanges ? comparisonRow : null;
-    return comparisonRow;
-}
 
 // Function to load original data into the table
 function loadOriginalData() {
-    currentData = originalData;  // Track that the original data is loaded
+    currentData.type = 'Original-data';  // Track that the original data is loaded
+
+    currentData.data = originalData;  // Track that the original data is loaded
     showSpinner()
 
     // Delay the heavy tasks by 1 second
@@ -88,11 +59,12 @@ function loadOriginalData() {
 // Function to load parsed data into the table
 function loadParsedData() {
 
-    currentData = processedData;  // Track that the original data is loaded
+    currentData.type = 'Parsed Data';  // Track that the original data is loaded
+
+    currentData.data = processedData;  // Track that the original data is loaded
     showSpinner()
 
     setTimeout(() => {
-        console.log(processedData[0])
         populateTable(processedData);
         showDownloadButtons();
         hideSpinner();
@@ -102,7 +74,9 @@ function loadParsedData() {
 
 // Function to load compared data into the table
 function loadComparedData() {
-    currentData = comparedData;  // Track that the original data is loaded
+    currentData.type = 'Compared Data';  // Track that the original data is loaded
+
+    currentData.data = comparedData;  // Track that the original data is loaded
 
     showSpinner()
     setTimeout(() => {
@@ -114,5 +88,55 @@ function loadComparedData() {
 
 }
 
+
+// Function to load compared data into the table
+function loadSAASData() {
+    currentData.type = 'SAAS';  // Track that the original data is loaded
+
+    currentData.data = SAASData;  // Track that the original data is loaded
+
+    showSpinner()
+    setTimeout(() => {
+        populateTable(SAASData);
+        showDownloadButtons();
+        hideSpinner();
+    }, 1);  // 1 second delay
+
+
+}
+
+// Function to load compared data into the table
+function loadHostedData() {
+    currentData.type = 'Hosted';  // Track that the original data is loaded
+
+    currentData.data = HostedData;  // Track that the original data is loaded
+
+    showSpinner()
+    setTimeout(() => {
+        populateTable(HostedData);
+        showDownloadButtons();
+        hideSpinner();
+    }, 1);  // 1 second delay
+
+
+}
+
+// Function to load compared data into the table
+function loadPivotTable() {
+
+    const pivotTableElement = document.getElementById("pivot-table");
+
+    // Initialize PivotTable.js for "Always on" tab when it's activated
+    $(function () {
+        $(pivotTableElement).pivotUI(processedData, {
+            rows: ["Dept","Always_On"],    // Rows will be Dept and Customer
+            // cols: ["Always_On"],           // Columns will be based on Always_On
+            aggregatorName: "Sum",         // Aggregator for Cost is Sum
+            vals: ["Cost"],                 // Summing the Cost
+        });
+    });
+
+
+}
 
 

@@ -37,8 +37,12 @@ function AwsAccParse(file) {
         },
         complete: function () {
             console.log("File parsing completed.");
-            //Do customer logic here
             postProcessCustomerData();
+            postProcessSAASData();
+            postProcessHostedData();
+            // postProcessAlwaysOnData();
+
+            loadParsedData();
         }
     });
 }
@@ -183,15 +187,49 @@ function postProcessCustomerData() {
     // console.log("Post-processed data:", processedData);
 }
 
-function postProcessDeptData() {
-    processedData.forEach((item) => {
-        //This should work for any Sales / Pso / Hosted
-        const key = `${item.Dept} ${item.PM} ${item.Project_Number}`;
-
-        if (storedData.has(key)) {
-            item.Dept = storedData.get(key)[0]
+function postProcessSAASData() {
+    SAASData = processedData.filter((item) => {
+        if (item.Dept && (item.Dept === "SAAS-US-IN" || item.Dept === "SAAS-EMEA" || item.Dept === "SAAS-US-IN")) {
+            return true; // Return items that match the condition
+        } else if (item.Dept.startsWith('SAAS')) {
+            // console.log("Non-SAAS item:", item); // Log items that don't match
+            return false; // Filter out items that don't match
         }
-    })
+    });
+}
+
+function postProcessHostedData() {
+    HostedData = processedData.filter((item) => {
+        if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-US-IN")) {
+            return true; // Return items that match the condition
+        } else if (item.Dept.startsWith('Hosted')) {
+            // console.log("Non-Hosted item:", item); // Log items that don't match
+            return false; // Filter out items that don't match
+        }
+    });
+}
+
+
+// function postProcessAlwaysOnData() {
+//     AlwaysOnData = processedData.filter((item) => {
+//         if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-US-IN")) {
+//             return true; // Return items that match the condition
+//         } else if (item.Dept.startsWith('Hosted')) {
+//             console.log("Non-Hosted item:", item); // Log items that don't match
+//             return false; // Filter out items that don't match
+//         }
+//     });
+// }
+function postProcessDeptData() {
+    //TODO:: do this 
+    // processedData.forEach((item) => {
+    //     //This should work for any Sales / Pso / Hosted
+    //     const key = `${item.Dept} ${item.PM} ${item.Project_Number}`;
+
+    //     if (storedData.has(key)) {
+    //         item.Dept = storedData.get(key)[0]
+    //     }
+    // })
 }
 
 // Function to check if a row is blank (empty or containing only blank fields or spaces)
@@ -202,4 +240,34 @@ function isEmptyRow(row) {
         }
     }
     return true;  // If all fields are empty or just spaces, the row is blank
+}
+
+// Function to create the comparison row (old -> new format)
+function createComparisonRow(originalRow, processedRow) {
+    let comparisonRow = {};
+    let hasChanges = false;  // Flag to track if there are any differences
+
+    // Iterate over all keys in the original row
+    for (let key in originalRow) {
+        let originalValue = originalRow[key];
+        let processedValue = processedRow[key];
+
+        // If there's a difference, store it in "old -> new" format
+        if (originalValue !== processedValue) {
+            comparisonRow[key] = `${originalValue === '' ? null : originalValue} -> ${processedValue}`;
+            hasChanges = true;  // Mark that there are changes
+        } else {
+            // If no change, store the original value as is for comparison
+            comparisonRow[key] = originalValue;
+        }
+    }
+
+    //We would like to ignore dates
+    delete comparisonRow["Date"];
+    delete comparisonRow[""];
+
+
+    // Return the comparison row only if there were any changes
+    // return hasChanges ? comparisonRow : null;
+    return comparisonRow;
 }

@@ -4,6 +4,8 @@ const cors = require('cors');  // Import the cors package
 const https = require('https');
 const fs = require('fs');
 const { chromium } = require('playwright');
+const path = require('path');
+
 
 
 
@@ -11,10 +13,9 @@ const { chromium } = require('playwright');
 
 // Load the SSL certificate and private key
 const options = {
-    key: fs.readFileSync('./SSL/Star_Lims_Com_2024_Distribution.key'),   // your .key file
-    cert: fs.readFileSync('./SSL/Star_Lims_Com_2024_Distribution.pem'),  // your .pem file
+    key: fs.readFileSync(path.join(__dirname, 'SSL', 'Star_Lims_Com_2024_Distribution.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'SSL', 'Star_Lims_Com_2024_Distribution.pem')),
     passphrase: 'd2GDgAZHxTxMkpV3'
-    // ca: fs.readFileSync('path/to/your/ca-certificates.pem') // optional, if you have intermediate certificates (can be empty or omitted if not needed)
 };
 
 const app = express();

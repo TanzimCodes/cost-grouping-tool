@@ -4,7 +4,7 @@ function downloadCSV() {
     if (getSelectedAccountType() === 'other')
         csv = Papa.unparse(transformOtherAccountDataBeforeDownloading());
     else
-        csv = Papa.unparse(currentData);
+        csv = Papa.unparse(currentData.data);
 
     // Create a Blob from the CSV data
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -12,7 +12,7 @@ function downloadCSV() {
     // Create an invisible link to trigger the download
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'data.csv';  // Set the filename for the download
+    link.download = `${currentData.type}.csv`;  // Set the filename for the download
     link.click();  // Trigger the download
 }
 

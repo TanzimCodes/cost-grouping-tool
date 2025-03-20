@@ -6,9 +6,46 @@ document.getElementById('loadParsedData').addEventListener('click', loadParsedDa
 document.getElementById('loadComparedData').addEventListener('click', loadComparedData);
 document.getElementById('login').addEventListener('click', login);
 
-
 document.getElementById('downloadCSV').addEventListener('click', downloadCSV);
-document.getElementById('downloadJSON').addEventListener('click', downloadJSON);
+
+// Event listener for tab change
+document.querySelectorAll('.nav-link').forEach(tab => {
+    tab.addEventListener('click', function (event) {
+        // Get the id of the active tab
+        const activeTab = event.target.getAttribute('href').substring(1);
+
+        // Clear PivotTable if switching away from the "Always on" tab
+        if (activeTab !== 'always-on') {
+            clearPivotTable();
+        }
+
+        // Load the respective data for the tab clicked
+        if (activeTab === 'data')
+            loadParsedData();
+        if (activeTab === 'saas')
+            loadSAASData();
+        if (activeTab === 'hosted')
+            loadHostedData();
+        if (activeTab === 'always-on')
+            loadPivotTable();
+    });
+});
+
+// Function to clear the PivotTable when switching away from the "Always on" tab
+function clearPivotTable() {
+
+    document.querySelector('#always-on').classList.remove('show', 'active');
+    document.querySelector('#data').classList.add('show', 'active');
+
+    const pivotTableElement = document.getElementById("pivot-table");
+
+    // Clear the pivot table content
+    $(pivotTableElement).html(''); // This will remove the pivot table from the element
+}
+
+
+
+
 
 function storeDataInMemory(event) {
 
