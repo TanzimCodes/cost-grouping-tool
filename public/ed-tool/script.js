@@ -302,7 +302,6 @@ function updateTableWithAGGrid({ headerValues, data, dimensionValueAttributes })
     };
 
     // Initialize AG Grid
-
     window.grid = agGrid.createGrid(document.getElementById("myGrid"), gridOptions);
     window.grid.sizeColumnsToFit();
     console.log(window.grid)

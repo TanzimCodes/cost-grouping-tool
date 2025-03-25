@@ -3,7 +3,7 @@ function resetVales() {
     originalData = []; // To store the original data (before processing)
     processedData = []; // To store the transformed data
     comparedData = []; // To store the compared data (original vs processed)
-    currentData = { type: '', data: [] }; // This will track the currently displayed data (original, processed, or compared)
+    currentData = { type: '', data: [] }; //This will track the currently displayed data (original, processed, or compared)
 }
 
 
@@ -13,8 +13,8 @@ function handleFileSelect(event) {
 
     // Get the selected option value (either "aws" or "other")
     const selectedAccType = getSelectedAccountType();
-
-    if (selectedAccType === 'other' && !getToken()) {
+    console.log(selectedAccType, getToken())
+    if (selectedAccType === 'rds_app' && !getToken()) {
         event.target.value = '';
         alert('Login first')
         return
@@ -45,7 +45,8 @@ function loadOriginalData() {
 
     // Delay the heavy tasks by 1 second
     setTimeout(() => {
-        populateTable(originalData); // Populate the table with the original data
+        // populateTable(originalData, 'dataTable'); // Populate the table with the original data
+        populateGridTable(originalData, 'dataTable'); // Populate the table with the original data
 
         // Show the download buttons after data is populated
         showDownloadButtons();
@@ -59,13 +60,14 @@ function loadOriginalData() {
 // Function to load parsed data into the table
 function loadParsedData() {
 
-    currentData.type = 'Parsed Data';  // Track that the original data is loaded
+    currentData.type = 'Parsed Data';
 
-    currentData.data = processedData;  // Track that the original data is loaded
+    currentData.data = processedData;
     showSpinner()
 
     setTimeout(() => {
-        populateTable(processedData);
+        // populateTable(processedData, 'dataTable');
+        populateGridTable(processedData, 'dataTable')
         showDownloadButtons();
         hideSpinner();
     }, 1);  // 1 second delay
@@ -80,7 +82,9 @@ function loadComparedData() {
 
     showSpinner()
     setTimeout(() => {
-        populateTable(comparedData);
+        // populateTable(comparedData, 'dataTable');
+        populateGridTable(comparedData, 'dataTable');
+
         showDownloadButtons();
         hideSpinner();
     }, 1);  // 1 second delay
@@ -97,7 +101,8 @@ function loadSAASData() {
 
     showSpinner()
     setTimeout(() => {
-        populateTable(SAASData);
+        // populateTable(SAASData, 'saasTable');
+        populateGridTable(SAASData, 'saasTable')
         showDownloadButtons();
         hideSpinner();
     }, 1);  // 1 second delay
@@ -113,7 +118,8 @@ function loadHostedData() {
 
     showSpinner()
     setTimeout(() => {
-        populateTable(HostedData);
+        // populateTable(HostedData, 'hostedTable');
+        populateGridTable(HostedData, 'hostedTable');
         showDownloadButtons();
         hideSpinner();
     }, 1);  // 1 second delay
@@ -121,22 +127,36 @@ function loadHostedData() {
 
 }
 
-// Function to load compared data into the table
-function loadPivotTable() {
 
-    const pivotTableElement = document.getElementById("pivot-table");
+function loadPivotTableDataForAlwaysOn() {
 
-    // Initialize PivotTable.js for "Always on" tab when it's activated
-    $(function () {
-        $(pivotTableElement).pivotUI(processedData, {
-            rows: ["Dept","Always_On"],    // Rows will be Dept and Customer
-            // cols: ["Always_On"],           // Columns will be based on Always_On
-            aggregatorName: "Sum",         // Aggregator for Cost is Sum
-            vals: ["Cost"],                 // Summing the Cost
-        });
-    });
+    const pivotTableElement = document.getElementById("always-on-table");
 
+    $(pivotTableElement).pivotUI(processedData, {
+        rows: ["Dept", "PM", "Always_On", "Project_Number"],// Rows will be Dept and Customer
+        // cols: ["Always_On"],           // Columns will be based on Always_On
+        aggregatorName: "Sum",           // Aggregator for Cost is Sum
+        vals: ["Cost"],                 // Summing the Cost
+        menuLimit: 2000,
+        inclusions: { "Always_On": ["TRUE"] }
+    })
 
 }
+
+
+function loadPivotTableDataForDeptPnPmCost() {
+
+    const pivotTableElement = document.getElementById("dept-pn-pm-table");
+
+    $(pivotTableElement).pivotUI(processedData, {
+        rows: ["Dept", "PM", "Project_Number"],// Rows will be Dept and Customer
+        // cols: ["Always_On"],           // Columns will be based on Always_On
+        aggregatorName: "Sum",           // Aggregator for Cost is Sum
+        vals: ["Cost"],                 // Summing the Cost
+        menuLimit: 2000
+    })
+}
+
+
 
 

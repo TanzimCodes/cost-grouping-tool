@@ -1,12 +1,10 @@
 async function OtherAccParse(file) {
     // Check cache first
     let apiResponse;
-    const cachedData = sessionStorage.getItem("deploymentsCache"); // Or use any caching mechanism you prefer
-    // console.log('cachedData', cachedData)
+    const cachedData = getCachedResponse('getIbmDeployments'); // Or use any caching mechanism you prefer
+
+    // Use cached data if it exists
     if (cachedData) {
-        // Use cached data if it exists
-        //TOOD: revome after giving to mike
-        // apiResponse = JSON.parse(cachedData);
         apiResponse = JSON.parse(cachedData);
         console.log("Using cached data.");
     } else {
@@ -17,7 +15,7 @@ async function OtherAccParse(file) {
             apiResponse = await fetchDeploymentsFromIbmManager();
             console.log('apiResponse', apiResponse)
             // Store the fetched data in cache for future use
-            sessionStorage.setItem("deploymentsCache", JSON.stringify(apiResponse));
+            cacheApiResponse('getIbmDeployments', JSON.stringify(apiResponse))
         } catch (error) {
             console.error(error)
             return; // Exit the function if fetching fails
@@ -38,6 +36,7 @@ async function OtherAccParse(file) {
             const mappedData = postProcessOtherAccData(csvData, apiResponse);
             processedData = mappedData;
 
+            loadParsedData();
         },
         header: false, // No headers in the CSV
         skipEmptyLines: true, // Skip any empty lines
@@ -90,7 +89,7 @@ function postProcessOtherAccData(csvData, apiResponse) {
                 if (matchingAppEntry) {
                     return {
                         // account_name: matchingAppEntry.account_name,
-                        Account: csvAccount,
+                        Account: accountName,
                         Customer: matchingAppEntry.customer_name,
                         Project_Number: matchingAppEntry.project_number,
                         Cost: cost // The cost comes from the CSV
@@ -126,7 +125,7 @@ function postProcessOtherAccData(csvData, apiResponse) {
                         });
                     return {
                         // account_name: matchingRdsEntry.account_name,
-                        Account: csvAccount,
+                        Account: accountName,
                         Customer: matchingRdsEntry.customer_name,
                         Project_Number: matchingRdsEntry.project_number,
                         Cost: cost, // The cost from the CSV data for the RDS account
@@ -136,7 +135,7 @@ function postProcessOtherAccData(csvData, apiResponse) {
                     // If no matching RDS entry found in the API response
                     return {
                         // account_name: accountName,
-                        Account: csvAccount,
+                        Account: accountName,
                         Customer: 'ghost',
                         Project_Number: 'ghost',
                         Cost: cost,

@@ -40,9 +40,9 @@ function AwsAccParse(file) {
             postProcessCustomerData();
             postProcessSAASData();
             postProcessHostedData();
-            // postProcessAlwaysOnData();
+            postProcessDeptData();
+            setTimeout(() => loadParsedData(), 100)
 
-            loadParsedData();
         }
     });
 }
@@ -123,12 +123,12 @@ function processRowForAwsAcc(row) {
     }
 
     // Step 9: Format the "Cost" column
-    // if (row["Cost"]) {
-    //     const costValue = parseFloat(row["Cost"]);
-    //     if (!isNaN(costValue)) {
-    //         row["Cost"] = "$" + costValue.toFixed(2);  // Format cost with $ and 2 decimal places
-    //     }
-    // }
+    if (row["Cost"]) {
+        row["Cost"] = parseFloat(row["Cost"]);
+        // if (!isNaN(costValue)) {
+        //     row["Cost"] = "$" + costValue.toFixed(2);  // Format cost with $ and 2 decimal places
+        // }
+    }
 
     return row;
 }
@@ -189,7 +189,7 @@ function postProcessCustomerData() {
 
 function postProcessSAASData() {
     SAASData = processedData.filter((item) => {
-        if (item.Dept && (item.Dept === "SAAS-US-IN" || item.Dept === "SAAS-EMEA" || item.Dept === "SAAS-US-IN")) {
+        if (item.Dept && (item.Dept === "SAAS-US-IN" || item.Dept === "SAAS-EMEA" || item.Dept === "SAAS-International")) {
             return true; // Return items that match the condition
         } else if (item.Dept.startsWith('SAAS')) {
             // console.log("Non-SAAS item:", item); // Log items that don't match
@@ -200,7 +200,7 @@ function postProcessSAASData() {
 
 function postProcessHostedData() {
     HostedData = processedData.filter((item) => {
-        if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-US-IN")) {
+        if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-International")) {
             return true; // Return items that match the condition
         } else if (item.Dept.startsWith('Hosted')) {
             // console.log("Non-Hosted item:", item); // Log items that don't match
@@ -210,26 +210,20 @@ function postProcessHostedData() {
 }
 
 
-// function postProcessAlwaysOnData() {
-//     AlwaysOnData = processedData.filter((item) => {
-//         if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-US-IN")) {
-//             return true; // Return items that match the condition
-//         } else if (item.Dept.startsWith('Hosted')) {
-//             console.log("Non-Hosted item:", item); // Log items that don't match
-//             return false; // Filter out items that don't match
-//         }
-//     });
-// }
 function postProcessDeptData() {
-    //TODO:: do this 
-    // processedData.forEach((item) => {
-    //     //This should work for any Sales / Pso / Hosted
-    //     const key = `${item.Dept} ${item.PM} ${item.Project_Number}`;
+    processedData.forEach((item) => {
+        //This should work for any Sales / PSO / Hosted /SAAS
+        const key = `${item.Dept} ${item.PM} ${item.Project_Number}`;
+        if (storedData.has(key)) {
+            console.log('beofore ', item.Dept, ' key ', storedData.get(key).Dept)
+            item.Dept = storedData.get(key).Dept
+            // item.Dept = 'custom dep'
 
-    //     if (storedData.has(key)) {
-    //         item.Dept = storedData.get(key)[0]
-    //     }
-    // })
+            item.Customer = item.Customer ?? storedData.get(key).Customer
+            console.log('after ', item.Dept)
+
+        }
+    })
 }
 
 // Function to check if a row is blank (empty or containing only blank fields or spaces)

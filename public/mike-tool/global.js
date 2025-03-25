@@ -8,3 +8,6 @@ let AlwaysOnData = []
 
 
 let storedData = new Map();
+
+let gridMap = new Map();
+

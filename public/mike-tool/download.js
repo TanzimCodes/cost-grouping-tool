@@ -1,7 +1,7 @@
 // Function to download data as CSV
 function downloadCSV() {
     let csv;
-    if (getSelectedAccountType() === 'other')
+    if (getSelectedAccountType() === 'rds_app')
         csv = Papa.unparse(transformOtherAccountDataBeforeDownloading());
     else
         csv = Papa.unparse(currentData.data);
@@ -32,11 +32,13 @@ function downloadJSON() {
 }
 
 function transformOtherAccountDataBeforeDownloading() {
+    // console.log(currentData)
     // Create deep clone of `currentData`
     const tempData = JSON.parse(JSON.stringify(currentData));
+    console.log(tempData)
     const transformedData = [];
 
-    tempData.forEach(item => {
+    tempData.data.forEach(item => {
         const obj = {
             "Account": "",
             "Customer": item.Customer,

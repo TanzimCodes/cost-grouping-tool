@@ -1,7 +1,7 @@
 // Function to populate the table with data
-function populateTable(data) {
-    const tableBody = document.querySelector('#dataTable tbody');
-    const tableHeader = document.querySelector('#dataTable thead tr');
+function populateTable(data, table_id) {
+    const tableBody = document.querySelector(`#${table_id} tbody`);
+    const tableHeader = document.querySelector(`#${table_id} thead tr`);
     tableBody.innerHTML = '';  // Clear existing rows
 
     if (data.length === 0) {
@@ -57,3 +57,66 @@ function populateTable(data) {
 
 
 }
+// Function to populate the AG-Grid table with data
+
+function populateGridTable(data, grid_id) {
+    console.log(gridMap)
+    // If there is no data, return
+    if (data.length === 0) {
+        return;
+    }
+
+    const headers = Object.keys(data[0]);
+
+    const colDefs = headers.map(header => ({
+        headerName: header,  // Column title
+        field: header,       // The field to get data from
+        autoHeight: true,  // Automatically adjust row height
+        filter: true,
+        enableRowGroup: true,
+    }));
+
+    colDefs.forEach(item => {
+        if (item.field === 'Cost')
+            item.aggFunc = 'sum';
+
+        if (item.field === 'app_accounts') {
+            item.cellRenderer = (params) => {
+                if (Array.isArray(params.value)) {
+                    // Join the app accounts data in a readable format (e.g., 'Account | Customer | Project Number')
+                    return params.value.map(account => `${account.Account} | ${account.Customer} | ${account.Project_Number}`).join('<br/>');
+                }
+                return ''; // Return an empty string if there's no app account data
+            }
+        }
+    })
+
+    //Check if AG Grid is already initialized
+    if (gridMap.get(grid_id)) {
+        // If AG Grid is initialized, update the data
+        gridMap.get(grid_id).setGridOption('rowData', data);
+        gridMap.get(grid_id).setGridOption('columnDefs', colDefs);
+
+    } else {
+        const gridOptions = {
+            columnDefs: colDefs,
+            rowData: data,
+            pagination: true, // Enable pagination
+            paginationPageSize: 50, // Set default number of rows per page
+            paginationPageSizeSelector: [50, 100, 150], // Options for pagination size,
+            rowGroupPanelShow: 'always',
+            grandTotalRow: 'bottom'
+        };
+
+
+        // Initialize AG Grid
+
+        const gridObj = agGrid.createGrid(document.querySelector(`#${grid_id}`), gridOptions)
+        gridObj.sizeColumnsToFit();
+
+        gridMap.set(grid_id, gridObj)
+    }
+
+}
+
+
