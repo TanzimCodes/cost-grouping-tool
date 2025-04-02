@@ -15,6 +15,15 @@ let currentData = []
 //   link.click();
 // })
 
+// Check if the page is served locally or from the server
+let apiBaseUrl;
+
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  apiBaseUrl = 'https://localhost';  // Local testing
+} else {
+  apiBaseUrl = 'https://172.25.255.17/';  // Remote server
+}
+
 document.getElementById('fetch-data').addEventListener('click', () => {
 
   const startDate = document.getElementById('start-date').value;
@@ -130,7 +139,7 @@ async function executeSavedQuery(params) {
 
 async function fetchData(postData) {
   try {
-    const response = await fetch('https://localhost:443/get-data', {
+    const response = await fetch(`https://${apiBaseUrl}/get-data`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

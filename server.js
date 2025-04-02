@@ -6,7 +6,7 @@ const fs = require('fs');
 const { chromium } = require('playwright');
 const path = require('path');
 const uploadDirectory = 'storage'
-
+const port = 443;
 // Load the SSL certificate and private key
 const options = {
     key: fs.readFileSync(path.join(__dirname, 'SSL', 'Star_Lims_Com_2024_Distribution.key')),
@@ -165,8 +165,9 @@ app.get('/load/:typeDate', (req, res) => {
     });
 });
 
+
 // Create an HTTPS server using the options and Express app
-https.createServer(options, app).listen(443, () => {
-    console.log('Server running at https://localhost:443/');
+https.createServer(options, app).listen(port, () => {
+    console.log(`Server running at https://localhost:${port}/`);
 });
 

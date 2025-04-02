@@ -84,7 +84,7 @@ function uploadDataToServer() {
     // console.log('Data size in bytes:', dataSize);
 
     // Making the POST request using fetch
-    fetch('https://localhost/upload', {
+    fetch(`https://${apiBaseUrl}/upload`, {
         method: 'POST',                // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json'  // Indicate that you're sending JSON data
@@ -110,7 +110,7 @@ function uploadDataToServer() {
 
 function loadDataFromServer(date) {
     // Making the POST request using fetch
-    fetch(`https://localhost/load/${date}`, {
+    fetch(`https://${apiBaseUrl}/load/${date}`, {
         method: 'GET',                // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json'  // Indicate that you're sending JSON data

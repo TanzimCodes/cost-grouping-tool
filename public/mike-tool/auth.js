@@ -2,7 +2,7 @@ function login() {
     console.log("fetching");
 
     // Make the request to the backend endpoint
-    fetch('https://localhost:443/get-token', {
+    fetch('https://172.25.255.17/get-token', {
         method: 'GET', // Using GET method since this is a simple retrieval
         headers: {
             'Content-Type': 'application/json', // Set content type as JSON
