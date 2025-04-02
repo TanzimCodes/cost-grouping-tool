@@ -37,12 +37,15 @@ function AwsAccParse(file) {
         },
         complete: function () {
             console.log("File parsing completed.");
+            //Maintaing order is important
+            postProcessDeptData();
+
+            //Process rest
             postProcessCustomerData();
             postProcessSAASData();
             postProcessHostedData();
-            postProcessDeptData();
-            setTimeout(() => loadParsedData(), 100)
 
+            uploadDataToServer();
         }
     });
 }
@@ -125,9 +128,6 @@ function processRowForAwsAcc(row) {
     // Step 9: Format the "Cost" column
     if (row["Cost"]) {
         row["Cost"] = parseFloat(row["Cost"]);
-        // if (!isNaN(costValue)) {
-        //     row["Cost"] = "$" + costValue.toFixed(2);  // Format cost with $ and 2 decimal places
-        // }
     }
 
     return row;
@@ -142,7 +142,7 @@ function postProcessCustomerData() {
         // Check if the required keys exist in the item
         if (item.Dept && item.PM && item.Project_Number) {
             // Define a key using Dept, PM, and Project_Number as a unique identifier
-            let key = `${item.Dept}|${item.PM}|${item.Project_Number}`;
+            let key = `${item.Dept} ${item.PM} ${item.Project_Number}`;
 
             if (!customerMap.has(key)) {
                 customerMap.set(key, { none: [], full: null });
@@ -168,6 +168,8 @@ function postProcessCustomerData() {
             if (value.full) {
                 // If a full customer exists, use its customer value
                 updatedItem.Customer = value.full.item.Customer;  // Replace "none" with the correct customer
+            } else if (storedData.has(key)) {
+                updatedItem.Customer = storedData.get(key).Customer;  // Replace "none" with the correct customer
             } else {
                 // If no full customer is found, set Customer to 'LabVantage'
                 updatedItem.Customer = 'LabVantage';  // Replace "none" with 'LabVantage'
@@ -181,11 +183,73 @@ function postProcessCustomerData() {
         });
     });
 
-
-
-    // Log the processed data for verification
-    // console.log("Post-processed data:", processedData);
 }
+
+function postProcessDeptData() {
+    const map = CreateDepMapFromCurrentData();
+    //Update stored map data using current file
+    // updateStoredMap();
+    // Define the departments we are interested in
+    const targetDepts = ['PSO', 'Hosted', 'SAAS', 'Sales'];
+
+    // Step 2: Iterate over the filtered data
+    processedData.forEach((item, index) => {
+        // Check if PM exists
+        if (targetDepts.includes(item.Dept) && item.PM) {
+            let key = `${item.Dept} ${item.PM}`;  // The key format: "{Dept} {PM}"
+
+            // Step 3: Check if the key exists in storedData map
+            if (storedData.has(key)) {
+                let storedItem = storedData.get(key);
+
+                // Step 4: Mutating array reference which exists in processedData
+                const prevDept = item.Dept;
+                item.Dept = storedItem.Dept;
+
+                // Step 6: Update compared data (check if comparedData[index] exists)
+                if (comparedData && comparedData[index]) {
+                    comparedData[index].Dept = `${prevDept} -> ${item.Dept}`;
+                }
+            } else if (map.has(key)) {
+                let storedItem = map.get(key);
+
+                // Step 4: Mutating array reference which exists in processedData
+                const prevDept = item.Dept;
+                item.Dept = storedItem.Dept;
+
+                // Step 6: Update compared data (check if comparedData[index] exists)
+                if (comparedData && comparedData[index]) {
+                    comparedData[index].Dept = `${prevDept} -> ${item.Dept}`;
+                }
+            }
+        }
+    });
+}
+
+
+function CreateDepMapFromCurrentData() {
+    const map = new Map();
+    // Define the departments we are interested in
+    const targetDepts = ['PSO', 'Hosted', 'SAAS', 'Sales'];
+
+    // First pass, update the storedData value
+    processedData.forEach(item => {
+        const temp = targetDepts.filter(dep => item.Dept.startsWith(dep));
+        const depFound = temp[0];
+
+        // Only include if:
+        // 1. A match was found.
+        // 2. The department name length is greater than or equal to the matched department's length.
+        if (!depFound || item.Dept.length <= depFound.length) {
+            return
+        }
+
+        map.set(`${depFound} ${item.PM}`, { Dept: item.Dept })
+    });
+    console.log(map)
+    return map;
+}
+
 
 function postProcessSAASData() {
     SAASData = processedData.filter((item) => {
@@ -209,23 +273,6 @@ function postProcessHostedData() {
     });
 }
 
-
-function postProcessDeptData() {
-    processedData.forEach((item) => {
-        //This should work for any Sales / PSO / Hosted /SAAS
-        const key = `${item.Dept} ${item.PM} ${item.Project_Number}`;
-        if (storedData.has(key)) {
-            console.log('beofore ', item.Dept, ' key ', storedData.get(key).Dept)
-            item.Dept = storedData.get(key).Dept
-            // item.Dept = 'custom dep'
-
-            item.Customer = item.Customer ?? storedData.get(key).Customer
-            console.log('after ', item.Dept)
-
-        }
-    })
-}
-
 // Function to check if a row is blank (empty or containing only blank fields or spaces)
 function isEmptyRow(row) {
     for (const key in row) {
@@ -239,7 +286,6 @@ function isEmptyRow(row) {
 // Function to create the comparison row (old -> new format)
 function createComparisonRow(originalRow, processedRow) {
     let comparisonRow = {};
-    let hasChanges = false;  // Flag to track if there are any differences
 
     // Iterate over all keys in the original row
     for (let key in originalRow) {
@@ -247,12 +293,14 @@ function createComparisonRow(originalRow, processedRow) {
         let processedValue = processedRow[key];
 
         // If there's a difference, store it in "old -> new" format
-        if (originalValue !== processedValue) {
+        if (originalValue !== processedValue && key != 'Cost') {
             comparisonRow[key] = `${originalValue === '' ? null : originalValue} -> ${processedValue}`;
-            hasChanges = true;  // Mark that there are changes
         } else {
             // If no change, store the original value as is for comparison
             comparisonRow[key] = originalValue;
+
+            if (key === 'Cost')
+                comparisonRow[key] = Number(comparisonRow[key])
         }
     }
 
@@ -261,7 +309,5 @@ function createComparisonRow(originalRow, processedRow) {
     delete comparisonRow[""];
 
 
-    // Return the comparison row only if there were any changes
-    // return hasChanges ? comparisonRow : null;
     return comparisonRow;
 }

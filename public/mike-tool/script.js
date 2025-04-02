@@ -9,8 +9,6 @@ function resetVales() {
 
 // Handle file selection and parsing
 function handleFileSelect(event) {
-
-
     // Get the selected option value (either "aws" or "other")
     const selectedAccType = getSelectedAccountType();
     console.log(selectedAccType, getToken())
@@ -20,6 +18,14 @@ function handleFileSelect(event) {
         return
     }
 
+    // Get the selected date
+    const selectedDate = getSelectedDate();
+    if (!selectedDate) {
+        // If no date is selected, stop further execution
+        event.target.value = '';
+        alert('Please select a date.');
+        return;
+    }
 
     const file = event.target.files[0];
     if (!file) return;
@@ -132,14 +138,27 @@ function loadPivotTableDataForAlwaysOn() {
 
     const pivotTableElement = document.getElementById("always-on-table");
 
-    $(pivotTableElement).pivotUI(processedData, {
-        rows: ["Dept", "PM", "Always_On", "Project_Number"],// Rows will be Dept and Customer
+    // Extend the pivot renderers to include the export renderers
+    var renderers = $.extend($.pivotUtilities.renderers, $.pivotUtilities.export_renderers);
+
+    // Apply the pivotUI with the export functionality
+    const table = $(pivotTableElement).pivotUI(processedData, {
+        rows: ["Dept", "PM", "Always_On", "Project_Number"],
         // cols: ["Always_On"],           // Columns will be based on Always_On
         aggregatorName: "Sum",           // Aggregator for Cost is Sum
         vals: ["Cost"],                 // Summing the Cost
         menuLimit: 2000,
-        inclusions: { "Always_On": ["TRUE"] }
-    })
+        inclusions: { "Always_On": ["TRUE"] },
+        renderers: renderers,           // Use the extended renderers with export functionality
+        // Optional: specify default renderer (you can change this if needed)
+        rendererName: "TSV Export"
+    });
+
+
+    // Get the pivot table's TSV data using the pivot utilities' export functionality
+    // tsvData(pivotTableElement)
+    console.log(table[0])
+
 
 }
 

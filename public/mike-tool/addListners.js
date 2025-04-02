@@ -8,6 +8,21 @@ document.getElementById('login').addEventListener('click', login);
 
 document.getElementById('downloadCSV').addEventListener('click', downloadCSV);
 
+
+document.getElementById('loadPreviousReport').addEventListener('click', loadPreviousReport);
+function loadPreviousReport() {
+    const selectedDate = getSelectedDate()
+    if (!selectedDate) {
+        alert('Select a Date')
+        return
+    }
+
+    const accountType = getSelectedAccountType()
+    loadDataFromServer(`${accountType}-${selectedDate}`);
+
+}
+
+
 // Event listener for tab change
 document.querySelectorAll('.nav-link').forEach(tab => {
     tab.addEventListener('click', function (event) {
@@ -72,31 +87,34 @@ function storeDataInMemory(event) {
             // Process the CSV data after confirming the headers
             csvDataArr.slice(1).forEach(arr => { // Skip the first row (headers)
                 const dept = arr[0].toLowerCase();
-
                 // Standardize the dept value based on its prefix
                 let deptValue;
 
-                if (dept.startsWith('pso')) {
+                if (dept.startsWith('pso') && dept.length > 3) {
                     deptValue = 'PSO';
-                } else if (dept.startsWith('hosted')) {
+                } else if (dept.startsWith('hosted') && dept.length > 6) {
                     deptValue = 'Hosted';
-                } else if (dept.startsWith('saas')) {
+                } else if (dept.startsWith('saas') && dept.length > 4) {
                     deptValue = 'SAAS';
-                } else if (dept.startsWith('sales')) {
+                } else if (dept.startsWith('sales') && dept.length > 5) {
                     deptValue = 'Sales';
                 }
 
                 // Only proceed if deptValue is defined
                 if (deptValue) {
-                    const key = `${deptValue} ${arr[1]} ${arr[2]}`;  // Combine Dept, PM, and Project_Number as key
-                    const obj = { Customer: arr[3], Dept: arr[0] };
-                    storedData.set(key, obj);
+
+                    //one for mapping customer
+                    const key = `${arr[0]} ${arr[1]} ${arr[2]}`;  // Combine Actual Dept, PM, and Project_Number as key
+                    storedData.set(key, { Customer: arr[3] });
+                    //one for mapping Dep
+                    const key2 = `${deptValue} ${arr[1]}`;  // Combine Mapped Dept, PM, and Project_Number as key
+                    storedData.set(key2, { Dept: arr[0] });
                 }
 
             });
 
             // Checking the stored data after processing
-            console.log(storedData);
+            console.log('Storing previous data....', storedData);
         },
         header: false, // No headers in the CSV (we are checking manually)
         skipEmptyLines: true, // Skip any empty lines

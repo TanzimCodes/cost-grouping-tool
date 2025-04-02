@@ -1,19 +1,19 @@
-const exportButton = document.getElementById('export');
+// const exportButton = document.getElementById('export');
 let currentData = []
 
-exportButton.addEventListener('click', () => {
-  // Convert the data to CSV using Papa Parse
-  const csv = Papa.unparse(currentData);
+// exportButton.addEventListener('click', () => {
+//   // Convert the data to CSV using Papa Parse
+//   const csv = Papa.unparse(currentData);
 
-  // Create a temporary link to download the CSV file
-  const link = document.createElement('a');
-  link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  link.target = '_blank';
-  link.download = 'exported-data.csv';
+//   // Create a temporary link to download the CSV file
+//   const link = document.createElement('a');
+//   link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+//   link.target = '_blank';
+//   link.download = 'exported-data.csv';
 
-  // Programmatically trigger the download
-  link.click();
-})
+//   // Programmatically trigger the download
+//   link.click();
+// })
 
 document.getElementById('fetch-data').addEventListener('click', () => {
 
@@ -28,7 +28,7 @@ document.getElementById('fetch-data').addEventListener('click', () => {
   const groupByTag2 = document.getElementById('group-by-tag-2').value;
 
 
-  const savedQuery = document.getElementById('saved-query').value;
+  // const savedQuery = document.getElementById('saved-query').value;
 
 
   const params = {
@@ -36,19 +36,19 @@ document.getElementById('fetch-data').addEventListener('click', () => {
     endDate
   }
 
-  if (savedQuery) {
-    params.groupByDimension = savedQuery;
-    executeSavedQuery(params)
-  } else {
-    params.tag = selectedTag;
-    params.linkedAccount = selectedLinkedAccount;
-    params.region = selectedRegion;
-    params.groupByDimension = groupByDimension;
-    params.groupByTag = groupByTag;
-    params.groupByDimension2 = groupByDimension2;
-    params.groupByTag2 = groupByTag2;
-    executeNormalQuery(params)
-  }
+  // if (savedQuery) {
+  //   params.groupByDimension = savedQuery;
+  //   executeSavedQuery(params)
+  // } else {
+  params.tag = selectedTag;
+  params.linkedAccount = selectedLinkedAccount;
+  params.region = selectedRegion;
+  params.groupByDimension = groupByDimension;
+  params.groupByTag = groupByTag;
+  params.groupByDimension2 = groupByDimension2;
+  params.groupByTag2 = groupByTag2;
+  executeNormalQuery(params)
+  // }
 
 });
 
@@ -107,6 +107,7 @@ async function executeSavedQuery(params) {
     const tableData = transformApiData(apiData)
     const { dimensionValueAttributes } = tableData;
     console.log('before', tableData.data)
+
     tableData.data = tableData.data.filter(item =>
       !dimensionValueAttributes[item.group1].startsWith('spot-eco')
       && !dimensionValueAttributes[item.group1].startsWith('Strategic')
@@ -282,7 +283,15 @@ function updateTableWithAGGrid({ headerValues, data, dimensionValueAttributes })
     { headerName: "Month", field: "month" },
     { headerName: headerValues[0] || 'Group 1', field: headerValues[0], filter: true },
     { headerName: headerValues[1] || 'Group 2', field: headerValues[1], filter: true },
-    { headerName: "Cost (USD)", field: "cost", filter: true }
+    {
+      headerName: "Cost (USD)",
+      field: "cost",
+      filter: true,
+      valueGetter: (params) => {
+        // Convert cost to number if it's not already
+        return parseFloat(params.data.cost) || 0;
+      }
+    }
   ];
 
   // Check if AG Grid is already initialized

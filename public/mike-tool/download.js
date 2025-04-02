@@ -51,11 +51,13 @@ function transformOtherAccountDataBeforeDownloading() {
         if (item.Account.includes('RDS') && item.app_accounts.length) {
             let costEachApp = cost / item.app_accounts.length;
 
+            //Data has already been sanitized, no need to match
             // Transform "761018873155 (RDS-0000002-AWEUC1)" -> (RDS-0000002-AWEUC1)
-            let match = item.Account.match(/\((.*?)\)/);
+            // let match = item.Account.match(/\((.*?)\)/);
+            //--------------------------->
 
             item.app_accounts.forEach(AppAccount => {
-                obj.Account = `${AppAccount.Account} - DB Usage (${match[1]})`;
+                obj.Account = `${AppAccount.Account} - DB Usage (${item.Account})`;
                 obj.Customer = AppAccount.Customer;
                 obj.Project_Number = AppAccount.Project_Number + '';
                 obj.Cost = costEachApp.toFixed(3);
@@ -64,9 +66,11 @@ function transformOtherAccountDataBeforeDownloading() {
 
 
         } else {
+            //Data has already been sanitized, no need to match
             // Transform "605134443081 (App-0000003-AWEUC1)" -> App-0000003-AWEUC1
-            let match = item.Account.match(/\((.*?)\)/);
-            obj.Account = match[1];
+            // let match = item.Account.match(/\((.*?)\)/);
+            //---------------------->
+            obj.Account = item.Account;
             obj.Cost = cost;
 
             transformedData.push({ ...obj });  // Shallow clone here

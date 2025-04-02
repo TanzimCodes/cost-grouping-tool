@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Center - Report Generation Tool</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <a class="navbar-brand ms-3" href="index.html">
+            <img src="logo.gif" alt="Logo">
+            LabVantage
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- The collapse div for navigation links -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto"> 
+                <li class="nav-item">
+                    <a class="nav-link" href="./ed-tool/index.html">Cost Explorer</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./mike-tool/index.html">Report Generation</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="./help-center.html">Help Center</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+
+
+    <div class="container mt-5">
+        <h1 class="display-4 text-center">Help Center</h1>
+        <p class="lead text-center">Find everything you need to get started, troubleshoot, and get support.</p>
+
+        <!-- Getting Started Section -->
+        <div id="gettingStarted" class="mb-5">
+            <h2>Getting Started</h2>
+            <p>This section will guide you through the basic steps of using the report generation tool.</p>
+            <ul>
+                <li><strong>Step 1:</strong> Upload your CSV data using the "Load Data" button.</li>
+                <li><strong>Step 2:</strong> Choose an account type (AWS or RDS/APP) in the dropdown menu.</li>
+                <li><strong>Step 3:</strong> Use the buttons to switch between Original Data, Parsed Data, and Compared
+                    Data.</li>
+            </ul>
+        </div>
+
+        <!-- Features Section -->
+        <div id="features" class="mb-5">
+            <h2>Key Features</h2>
+            <ul>
+                <li><strong>Original Data:</strong> View your raw uploaded data without modification.</li>
+                <li><strong>Parsed Data:</strong> View the data after it’s been processed and organized.</li>
+                <li><strong>Compared Data:</strong> Compare two different datasets to spot differences.</li>
+            </ul>
+        </div>
+
+        <!-- FAQ Section -->
+        <div id="faq" class="mb-5">
+            <h2>Frequently Asked Questions</h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            How do I upload a CSV file?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+                        data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            To upload a CSV file, click the "Load Data" button and select your CSV file from your
+                            computer.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Why isn't my data showing up?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+                        data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Ensure your file is in CSV format and properly structured. If it continues to not display,
+                            try refreshing the page.
+                        </div>
+                    </div>
+                </div>
+                <!-- Add more FAQ items here -->
+            </div>
+        </div>
+
+        <!-- Troubleshooting Section -->
+        <div id="troubleshooting" class="mb-5">
+            <h2>Troubleshooting</h2>
+            <ul>
+                <li><strong>Problem:</strong> Data is not loading after clicking the "Load Data" button.</li>
+                <li><strong>Solution:</strong> Ensure your CSV file is correctly formatted and contains no errors.</li>
+                <li><strong>Problem:</strong> The tables are not showing properly.</li>
+                <li><strong>Solution:</strong> Try refreshing the page or clearing your browser cache.</li>
+            </ul>
+        </div>
+
+        <!-- Contact Support Section -->
+        <div id="contactSupport" class="mb-5">
+            <h2>Contact Support</h2>
+            <p>If you're still having trouble, feel free to reach out to our support team.</p>
+            <form id="contactForm">
+                <div class="mb-3">
+                    <label for="userEmail" class="form-label">Your Email</label>
+                    <input type="email" class="form-control" id="userEmail" required>
+                </div>
+                <div class="mb-3">
+                    <label for="userMessage" class="form-label">Your Message</label>
+                    <textarea class="form-control" id="userMessage" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

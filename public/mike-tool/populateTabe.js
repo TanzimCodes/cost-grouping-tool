@@ -74,6 +74,13 @@ function populateGridTable(data, grid_id) {
         autoHeight: true,  // Automatically adjust row height
         filter: true,
         enableRowGroup: true,
+        cellStyle: (params) => {
+            // Check if the value is a string before calling .includes()
+            if (typeof params.value === "string" && params.value.includes("->")) {
+                return { backgroundColor: '#007bff' , color: 'white'};  // Apply styles if condition is met
+            }
+            return null;  // Default style
+        }
     }));
 
     colDefs.forEach(item => {

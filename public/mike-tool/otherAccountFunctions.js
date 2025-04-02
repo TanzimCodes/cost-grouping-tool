@@ -35,8 +35,7 @@ async function OtherAccParse(file) {
             // Now, transform and match data with API response
             const mappedData = postProcessOtherAccData(csvData, apiResponse);
             processedData = mappedData;
-
-            loadParsedData();
+            uploadDataToServer();
         },
         header: false, // No headers in the CSV
         skipEmptyLines: true, // Skip any empty lines
@@ -98,7 +97,7 @@ function postProcessOtherAccData(csvData, apiResponse) {
                     // If no match found for App account
                     return {
                         // account_name: accountName,
-                        Account: csvAccount,
+                        Account: accountName,
                         Customer: 'ghost',
                         Project_Number: 'ghost',
                         Cost: cost
@@ -144,6 +143,8 @@ function postProcessOtherAccData(csvData, apiResponse) {
                     };
                 }
             }
+        } else {
+            console.log('could not extract', row)
         }
         return null;  // Return null if no match is found
     }).filter(item => item !== null); // Remove null values

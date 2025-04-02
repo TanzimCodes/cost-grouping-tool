@@ -191,5 +191,5 @@ populateDropdown('group-by-tag', groupByTags);
 populateDropdown('group-by-dimension-2', groupByDimensions);
 populateDropdown('group-by-tag-2', groupByTags);
 
-populateDropdown('saved-query', savedQuery);
+// populateDropdown('saved-query', savedQuery);
 

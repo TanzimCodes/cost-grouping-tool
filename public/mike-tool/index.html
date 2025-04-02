@@ -50,18 +50,22 @@
     <div class="container mt-5">
 
         <div class="row">
-            <div class="col-4">
-                <label for="fileInput" class="form-label">load Data</label>
+            <div class="col-3">
+                <label for="fileInput" class="form-label">Upload Data</label>
                 <input type="file" id="fileInput" class="form-control mb-3" accept=".csv">
             </div>
 
-            <div class="col-4">
+            <div class="col-3">
+                <label for="datePicker" class="form-label">Select Month and Year</label>
+                <input type="month" id="datePicker" class="form-control mb-3">
+            </div>
+
+            <div class="col-3">
                 <label for="storeFileInpute" class="form-label">Store Previous Data</label>
                 <input type="file" id="storeFileInpute" class="form-control mb-3" accept=".csv">
             </div>
 
-
-            <div class="col-4">
+            <div class="col-3">
                 <label for="fileOptions" class="form-label">Choose Account type</label>
                 <select id="fileOptions" class="form-select mb-3">
                     <option value="aws">AWS Account</option>
@@ -72,10 +76,12 @@
         </div>
 
 
+
         <div class="mt-3">
             <button id="loadOriginalData" class="btn btn-primary">Original Data</button>
             <button id="loadParsedData" class="btn btn-success">Parsed Data</button>
             <button id="loadComparedData" class="btn btn-secondary">Compared Data</button>
+            <button id="loadPreviousReport" class="btn btn-dark">Load Previously Generated Report</button>
         </div>
 
 
@@ -92,7 +98,7 @@
 
         <!-- Bootstrap 5 Theme Mode Toggle Switch -->
         <div class="form-check form-switch mt-3">
-            <input class="form-check-input" type="checkbox" id="themeToggle" onchange="toggleTheme()" checked>
+            <input class="form-check-input" type="checkbox" id="themeToggle" onchange="toggleTheme()">
             <label class="form-check-label" for="themeToggle">Table Light/Dark</label>
         </div>
 
@@ -126,7 +132,7 @@
 
             <!-- Data Table Tab -->
             <div class="tab-pane fade show active" id="data" role="tabpanel" aria-labelledby="data-tab">
-                <div class="mt-3" data-ag-theme-mode="dark-blue">
+                <div class="mt-3" data-ag-theme-mode="light">
                     <!-- AG-Grid Container -->
                     <div id="dataTable" class="ag-theme-alpine mb-5" style="height: 800px; width: 100%;"></div>
                     <!-- <table id="dataTable" class="table table-bordered">
@@ -144,7 +150,7 @@
 
             <!-- SAAS Table Tab -->
             <div class="tab-pane fade" id="saas" role="tabpanel" aria-labelledby="saas-tab">
-                <div class="mt-3" data-ag-theme-mode="dark-blue">
+                <div class="mt-3" data-ag-theme-mode="light">
                     <div id="saasTable" class="mb-5" style="height: 800px; width: 100%;"></div>
 
                     <!-- <table id="saasTable" class="table table-bordered">
@@ -162,7 +168,7 @@
 
             <!-- Hosted Table Tab -->
             <div class="tab-pane fade" id="hosted" role="tabpanel" aria-labelledby="hosted-tab">
-                <div class="mt-3" data-ag-theme-mode="dark-blue">
+                <div class="mt-3" data-ag-theme-mode="light">
                     <div id="hostedTable" class="mb-5" style="height: 800px; width: 100%;"></div>
 
                     <!-- <table id="hostedTable" class="table table-bordered">
@@ -255,6 +261,8 @@
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
         <!-- Link to the PivotTable.js library -->
         <script src="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.js"></script>
+
+
         <!-- --------------- -->
 
 
@@ -262,6 +270,8 @@
         <script src="https://cdn.jsdelivr.net/npm/ag-grid-enterprise/dist/ag-grid-enterprise.min.js"></script>
 
         <!--Custom Script-->
+        <script src="pivot-export-renderer.js"></script>
+
         <script src="global.js"></script>
         <script src="script.js"></script>
         <script src="auth.js"></script>

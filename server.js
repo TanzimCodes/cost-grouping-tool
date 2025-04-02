@@ -5,11 +5,7 @@ const https = require('https');
 const fs = require('fs');
 const { chromium } = require('playwright');
 const path = require('path');
-
-
-
-
-
+const uploadDirectory = 'storage'
 
 // Load the SSL certificate and private key
 const options = {
@@ -19,10 +15,10 @@ const options = {
 };
 
 const app = express();
-const port = process.env.PORT || 3001;
+
 
 // Middleware to parse JSON bodies
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 app.use(express.static(path.join(__dirname, 'public')))
 
@@ -125,13 +121,52 @@ app.get('/get-token', async (req, res) => {
     }
 });
 
+// Route to handle JSON upload (overwrite based on 'overwrite' param)
+app.post('/upload', (req, res) => {
+    const date = req.body.date; // Date in the format YYYY-MM (e.g., "2025-01")
+    const jsonData = req.body.data; // The JSON data to be saved
+    const type = req.body.type; // The JSON data to be saved
+    console.log(type)
+
+    if (!date || !jsonData || !type) {
+        return res.status(400).json({ message: 'Date, data and type are required.' });
+    }
+
+    const filePath = path.join(__dirname, uploadDirectory, `${type}-${date}.json`);
+
+
+    // Save the data to the file (it will overwrite if the file already exists or if overwrite is true)
+    fs.writeFile(filePath, JSON.stringify(jsonData, null, 2), (err) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error saving data.' });
+        }
+
+        res.status(200).json({ message: `Data saved for ${date}.`, filePath });
+    });
+});
+
+// Route to load previous data
+app.get('/load/:typeDate', (req, res) => {
+    const date = req.params.typeDate; // e.g "aws-2025-01")
+    const filePath = path.join(uploadDirectory, `${date}.json`);
+    console.log(filePath)
+    // Check if the file exists
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'Data not found for this month/year.' });
+    }
+
+    // Read and send the file content
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error reading data.' });
+        }
+
+        res.status(200).json(JSON.parse(data)); // Send the parsed JSON data
+    });
+});
 
 // Create an HTTPS server using the options and Express app
 https.createServer(options, app).listen(443, () => {
     console.log('Server running at https://localhost:443/');
 });
-// // Start the server
-// app.listen(port, () => {
-//     console.log(`Server is running on port ${port}`);
-// });
 
