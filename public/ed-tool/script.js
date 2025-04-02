@@ -139,7 +139,7 @@ async function executeSavedQuery(params) {
 
 async function fetchData(postData) {
   try {
-    const response = await fetch(`https://${apiBaseUrl}/get-data`, {
+    const response = await fetch(`${apiBaseUrl}/get-data`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
