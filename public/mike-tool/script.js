@@ -11,12 +11,12 @@ function resetVales() {
 function handleFileSelect(event) {
     // Get the selected option value (either "aws" or "other")
     const selectedAccType = getSelectedAccountType();
-    console.log(selectedAccType, getToken())
-    if (selectedAccType === 'rds_app' && !getToken()) {
-        event.target.value = '';
-        alert('Login first')
-        return
-    }
+    // console.log(selectedAccType, getToken())
+    // if (selectedAccType === 'rds_app' && !getToken()) {
+    //     event.target.value = '';
+    //     alert('Login first')
+    //     return
+    // }
 
     // Get the selected date
     const selectedDate = getSelectedDate();

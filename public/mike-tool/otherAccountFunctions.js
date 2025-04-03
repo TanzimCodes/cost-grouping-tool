@@ -5,7 +5,9 @@ async function OtherAccParse(file) {
 
     // Use cached data if it exists
     if (cachedData) {
-        apiResponse = JSON.parse(cachedData);
+        // apiResponse = JSON.parse(cachedData);
+        apiResponse = cachedData;
+
         console.log("Using cached data.");
     } else {
         // If no cache, fetch new data
