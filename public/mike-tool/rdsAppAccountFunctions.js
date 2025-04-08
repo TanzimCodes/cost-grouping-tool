@@ -94,17 +94,16 @@ function postProcessRdsAppAccData(csvData, apiResponse) {
             const accountName = csvAccountMatch[1];  // The extracted account name
             const isAppAccount = accountName.startsWith('App');
             const isRDSAccount = accountName.startsWith('RDS');
+            const isAWSAccount = accountName.startsWith('AWS Administrator');
 
             // Parse cost from the second column in CSV (costStr)
             const cost = parseFloat(costStr.replace('$', '').replace(',', ''));
 
             if (isAppAccount) {
                 const matchingAppEntry = apiResponse.find((entry) => entry.account_name.startsWith(accountName));
-                // const matchingAppEntry = apiResponse.find((entry) => entry.account_name == accountName);
 
                 if (matchingAppEntry) {
                     return {
-                        // account_name: matchingAppEntry.account_name,
                         Account: accountName,
                         Customer: matchingAppEntry.customer_name,
                         Project_Number: matchingAppEntry.project_number,
@@ -113,20 +112,15 @@ function postProcessRdsAppAccData(csvData, apiResponse) {
                 } else {
                     // If no match found for App account
                     return {
-                        // account_name: accountName,
                         Account: accountName,
                         Customer: 'ghost',
                         Project_Number: 'ghost',
                         Cost: cost
                     };
                 }
-            }
-
-            if (isRDSAccount) {
+            } else if (isRDSAccount) {
                 // For RDS accounts, first find the matching RDS account entry itself
                 const matchingRdsEntry = apiResponse.find((entry) => entry.account_name.startsWith(accountName));
-                // const matchingRdsEntry = apiResponse.find((entry) => entry.account_name== accountName);
-
 
                 if (matchingRdsEntry) {
                     // For RDS accounts, find all App accounts that are linked to it via `rds_account_name`
@@ -140,7 +134,6 @@ function postProcessRdsAppAccData(csvData, apiResponse) {
                             };
                         });
                     return {
-                        // account_name: matchingRdsEntry.account_name,
                         Account: accountName,
                         Customer: matchingRdsEntry.customer_name,
                         Project_Number: matchingRdsEntry.project_number,
@@ -150,7 +143,6 @@ function postProcessRdsAppAccData(csvData, apiResponse) {
                 } else {
                     // If no matching RDS entry found in the API response
                     return {
-                        // account_name: accountName,
                         Account: accountName,
                         Customer: 'ghost',
                         Project_Number: 'ghost',
@@ -159,6 +151,17 @@ function postProcessRdsAppAccData(csvData, apiResponse) {
 
                     };
                 }
+            } else if (!isAWSAccount) {
+                let r = {
+
+                    Account: accountName,
+                    Customer: '',
+                    Project_Number: '',
+                    Cost: cost
+                };
+                return r;
+            } else {
+                console.log('werid row ' + row)
             }
         } else {
             console.log('could not extract', row)
@@ -271,7 +274,7 @@ function transformP2(tempData) {
 
 
 
-        } else {
+        } else if (item.Account.includes('App')) {
             //For App accounts only
             if (devOpsSet.has(item.Customer) || item.Customer === 'ghost') {
                 item.Project_Number = 'DevOps'
@@ -291,6 +294,12 @@ function transformP2(tempData) {
 
             transformedData.push(obj);  // Shallow clone here
 
+        } else {
+            //For anothing else
+            obj.Project_Number = `${item.Account}(DevOps)`;
+            obj.Cost = cost
+
+            transformedData.push(obj);
         }
 
     });

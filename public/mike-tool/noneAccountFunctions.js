@@ -1,17 +1,17 @@
 function NoneAccParse(file) {
     return new Promise((resolve, reject) => {
         Papa.parse(file, {
-            header: true,             // Treat the first row as headers
+            header: false, // No headers in the CSV    
             skipEmptyLines: true,    // Skip empty lines
             step: function (results, parser) {
                 let row = results.data;  // results.data is an array of objects
 
                 // Check if headers are valid
-                if (!validateHeaders(results.meta.fields)) {
-                    reject(new Error("None File has invalid"));
-                    parser.abort();  // Abort parsing if headers are incorrect
-                    return;
-                }
+                // if (!validateHeaders(results.meta.fields)) {
+                //     reject(new Error("None File has invalid"));
+                //     parser.abort();  // Abort parsing if headers are incorrect
+                //     return;
+                // }
 
                 // Stop if the row is blank
                 if (isEmptyRow(row)) {
@@ -22,13 +22,25 @@ function NoneAccParse(file) {
                 // Process the row, including checking for the 'Cost' condition
                 const processedRow = processRowForNoneAcc(row);
 
+
+
                 // If the row was skipped (due to Cost starting with '<'), don't continue processing
                 if (!processedRow) {
                     return;
                 }
 
+                let obj = {
+                    "Dept": 'Allocation',
+                    "PM": 'Allocation',
+                    "Customer": 'Labvantage',
+                    "Project_Number": processedRow[0],
+                    "Customer": "Labvantage",
+                    "Always_On": "NONE",
+                    "Cost": processedRow[1]
+                }
+
                 // Store the processed row
-                noneData.push(processedRow);
+                noneData.push(obj);
             },
             complete: function () {
                 console.log("None File parsing completed.");
@@ -55,13 +67,14 @@ function isEmptyRow(row) {
 
 // Function to process the row for NoneAcc
 function processRowForNoneAcc(row) {
+
     // Check if the Cost starts with '<'
-    if (row.Cost && row.Cost.startsWith('<')) {
+    if (row[1] && row[1].startsWith('<')) {
         return null;  // Skip this row if Cost starts with '<'
     }
 
     // Parse cost from the second column in CSV (costStr)
-    row.Cost = parseFloat(row.Cost.replace('$', '').replace(',', ''));
+    row[1] = parseFloat(row[1].replace('$', '').replace(',', ''));
     // If Cost is valid, continue processing the row
     // You can add any other processing here if necessary
     return row;
