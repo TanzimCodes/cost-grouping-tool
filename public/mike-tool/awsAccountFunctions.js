@@ -1,54 +1,58 @@
-
 function AwsAccParse(file) {
-    Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        step: function (results, parser) {
-            let row = results.data;  // results.data is an array of objects, so handle appropriately
+    return new Promise((resolve, reject) => {
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            step: function (results, parser) {
+                let row = results.data;  // results.data is an array of objects, so handle appropriately
 
-            // Stop if the row is blank
-            if (isEmptyRow(row)) {
-                parser.abort();  // Stop parsing when a blank row is found
-                return;
-            }
+                // Stop if the row is blank
+                if (isEmptyRow(row)) {
+                    parser.abort();  // Stop parsing when a blank row is found
+                    return;
+                }
 
-            // Clone the row to avoid mutating the original row when processing
-            let clonedRow = { ...row };  // Creates a shallow copy of the row object
+                if (row.Dept === 'none' && row.PM === 'none' && row.Project_Number === 'none') {
+                    console.log('found ' + JSON.stringify(row))
+                    return;
 
-            // Store original data
-            originalData.push(row);
+                }
 
-            // Process the row here (apply transformations)
-            const processedRow = processRowForAwsAcc(clonedRow);  // Now using the cloned row
+                // Clone the row to avoid mutating the original row when processing
+                let clonedRow = { ...row };  // Creates a shallow copy of the row object
 
-            // console.log("Processed row:", processedRow);  // Log the row to see its content
+                // Process the row here (apply transformations)
+                const processedRow = processRowForAwsAcc(clonedRow);  // Now using the cloned row
 
-            // Store the processed row
-            processedData.push(processedRow);
+                // Store the processed row
+                awsData.push(processedRow);
 
-            // Create the compared data while processing
-            const comparisonRow = createComparisonRow(row, processedRow);
+                // Create the compared data while processing
+                const comparisonRow = createComparisonRow(row, processedRow);
 
-            // console.log("Comparison Row:", comparisonRow);  // Log comparisonRow
-
-            if (comparisonRow !== null) {
                 comparedData.push(comparisonRow);
+
+            },
+            complete: function () {
+                console.log("File parsing completed.");
+                // Maintaing order is important
+                postProcessDeptData();
+
+                // Process rest
+                postProcessCustomerData();
+                postProcessSAASData();
+                postProcessHostedData();
+
+                // Resolve the promise once parsing is done
+                resolve();
+            },
+            error: function (error) {
+                reject(error); // Reject if there's an error during parsing
             }
-        },
-        complete: function () {
-            console.log("File parsing completed.");
-            //Maintaing order is important
-            postProcessDeptData();
-
-            //Process rest
-            postProcessCustomerData();
-            postProcessSAASData();
-            postProcessHostedData();
-
-            uploadDataToServer();
-        }
+        });
     });
 }
+
 
 // Function to process a row
 function processRowForAwsAcc(row) {
@@ -138,7 +142,7 @@ function postProcessCustomerData() {
     let customerMap = new Map();
 
     // Step 1: Process data to find and track "none" customer objects
-    processedData.forEach((item, index) => {
+    awsData.forEach((item, index) => {
         // Check if the required keys exist in the item
         if (item.Dept && item.PM && item.Project_Number) {
             // Define a key using Dept, PM, and Project_Number as a unique identifier
@@ -175,8 +179,8 @@ function postProcessCustomerData() {
                 updatedItem.Customer = 'LabVantage';  // Replace "none" with 'LabVantage'
             }
 
-            // Step 3: Assign the updated item back to the processedData array at the same index
-            processedData[index] = updatedItem;
+            // Step 3: Assign the updated item back to the awsData array at the same index
+            awsData[index] = updatedItem;
 
             // Step 4: Store the updated Customer transition in comparedData
             comparedData[index].Customer = `none -> ${updatedItem.Customer}`  // Store the transition
@@ -193,7 +197,7 @@ function postProcessDeptData() {
     const targetDepts = ['PSO', 'Hosted', 'SAAS', 'Sales'];
 
     // Step 2: Iterate over the filtered data
-    processedData.forEach((item, index) => {
+    awsData.forEach((item, index) => {
         // Check if PM exists
         if (targetDepts.includes(item.Dept) && item.PM) {
             let key = `${item.Dept} ${item.PM}`;  // The key format: "{Dept} {PM}"
@@ -202,7 +206,7 @@ function postProcessDeptData() {
             if (storedData.has(key)) {
                 let storedItem = storedData.get(key);
 
-                // Step 4: Mutating array reference which exists in processedData
+                // Step 4: Mutating array reference which exists in awsData
                 const prevDept = item.Dept;
                 item.Dept = storedItem.Dept;
 
@@ -213,7 +217,7 @@ function postProcessDeptData() {
             } else if (map.has(key)) {
                 let storedItem = map.get(key);
 
-                // Step 4: Mutating array reference which exists in processedData
+                // Step 4: Mutating array reference which exists in awsData
                 const prevDept = item.Dept;
                 item.Dept = storedItem.Dept;
 
@@ -233,7 +237,7 @@ function CreateDepMapFromCurrentData() {
     const targetDepts = ['PSO', 'Hosted', 'SAAS', 'Sales'];
 
     // First pass, update the storedData value
-    processedData.forEach(item => {
+    awsData.forEach(item => {
         const temp = targetDepts.filter(dep => item.Dept.startsWith(dep));
         const depFound = temp[0];
 
@@ -252,7 +256,7 @@ function CreateDepMapFromCurrentData() {
 
 
 function postProcessSAASData() {
-    SAASData = processedData.filter((item) => {
+    SAASData = awsData.filter((item) => {
         if (item.Dept && (item.Dept === "SAAS-US-IN" || item.Dept === "SAAS-EMEA" || item.Dept === "SAAS-International")) {
             return true; // Return items that match the condition
         } else if (item.Dept.startsWith('SAAS')) {
@@ -260,10 +264,11 @@ function postProcessSAASData() {
             return false; // Filter out items that don't match
         }
     });
+    console.log('SAAS data = > ', SAASData)
 }
 
 function postProcessHostedData() {
-    HostedData = processedData.filter((item) => {
+    HostedData = awsData.filter((item) => {
         if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-International")) {
             return true; // Return items that match the condition
         } else if (item.Dept.startsWith('Hosted')) {

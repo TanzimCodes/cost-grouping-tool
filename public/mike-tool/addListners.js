@@ -1,24 +1,88 @@
-document.getElementById('fileInput').addEventListener('change', handleFileSelect);
-document.getElementById('storeFileInpute').addEventListener('change', storeDataInMemory);
+// document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+// document.getElementById('storeFileInpute').addEventListener('change', storeDataInMemory);
 
-document.getElementById('loadOriginalData').addEventListener('click', loadOriginalData);
-document.getElementById('loadParsedData').addEventListener('click', loadParsedData);
-document.getElementById('loadComparedData').addEventListener('click', loadComparedData);
-document.getElementById('login').addEventListener('click', login);
 
-document.getElementById('downloadCSV').addEventListener('click', downloadCSV);
+// document.getElementById('loadAwsParsedData').addEventListener('click', loadAwsData);
+document.getElementById('loadAwsComparedData').addEventListener('click', loadComparedData);
+// document.getElementById('login').addEventListener('click', login);
+
+document.getElementById('saveReport').addEventListener('click', saveReport);
 
 
 document.getElementById('loadPreviousReport').addEventListener('click', loadPreviousReport);
+
+
+document.getElementById('generateReportButton').addEventListener('click', generateReport);
+
+async function generateReport() {
+    try {
+        const date = getSelectedDate()
+        if (!date) {
+            forgetDateDialogue();
+            return
+        }
+        const awsFile = document.getElementById('awsFileInput').files[0];
+        const rdsFile = document.getElementById('rdsFileInput').files[0];
+        const noneFile = document.getElementById('noneFileInput').files[0];
+
+        //Todo: uncomment
+        if (!awsFile && !rdsFile && !noneFile) {
+            missingFileUploadDialogue()
+            return;
+        }
+
+        // Clear existing data
+        resetValues();
+        // Parse AWS file, Other Accounts file, and None file synchronously
+        if (awsFile)
+            await AwsAccParse(awsFile);
+        if (rdsFile)
+            await RdsAppAccParse(rdsFile);
+        if (noneFile)
+            await NoneAccParse(noneFile);
+        console.log('SHOULD NOT BE HERE')
+        // Merge by reference
+        mergedData = [...awsData, ...rdsAppData, ...noneData];
+        SuccessAlert('Report Generated 🕺', 'Review it, hit save 💾....or lose it forever 😱!');
+
+        loadMergedData();
+
+
+    } catch (error) {
+        errorAlert(`${error}`)
+    }
+
+
+}
+
+
+
+
+
+
+// Function to show the confirmation dialog
+async function showOverwriteConfirmation(date) {
+    return Swal.fire({
+        text: `A report for ${date} was previously generated, do you want to overwrite?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'No'
+    })
+}
+
+
+
+
+
 function loadPreviousReport() {
     const selectedDate = getSelectedDate()
     if (!selectedDate) {
-        alert('Select a Date')
+        forgetDateDialogue()
         return
     }
 
-    const accountType = getSelectedAccountType()
-    loadDataFromServer(`${accountType}-${selectedDate}`);
+    loadFileFromServer(`${selectedDate}`);
 
 }
 
@@ -28,10 +92,16 @@ document.querySelectorAll('.nav-link').forEach(tab => {
     tab.addEventListener('click', function (event) {
         // Get the id of the active tab
         const activeTab = event.target.getAttribute('href').substring(1);
-
+        //aws-data rds-app-data none-data
         // Load the respective data for the tab clicked
-        if (activeTab === 'data')
-            loadParsedData();
+        if (activeTab === 'merged-data')
+            loadMergedData();
+        if (activeTab === 'aws-data')
+            loadAwsData();
+        if (activeTab === 'rds-app-data')
+            loadRdsAppdData();
+        if (activeTab === 'none-data')
+            loadNonedData();
         if (activeTab === 'saas')
             loadSAASData();
         if (activeTab === 'hosted')
@@ -45,18 +115,6 @@ document.querySelectorAll('.nav-link').forEach(tab => {
     });
 });
 
-document.getElementById('fileOptions').addEventListener('change', function () {
-    const selectedValue = this.value;
-
-    // If AWS Account is selected, show all tabs
-    if (selectedValue === 'aws') {
-        toggleTabs(false);  // Show the tabs
-    }
-    // If RDS/APP Accounts is selected, hide the last four tabs
-    else if (selectedValue === 'rds_app') {
-        toggleTabs(true);  // Hide the tabs
-    }
-});
 
 
 

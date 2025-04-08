@@ -1,44 +1,15 @@
 
-function resetVales() {
-    originalData = []; // To store the original data (before processing)
-    processedData = []; // To store the transformed data
+function resetValues() {
     comparedData = []; // To store the compared data (original vs processed)
-    currentData = { type: '', data: [] }; //This will track the currently displayed data (original, processed, or compared)
-}
+    currentData = { type: '', data: [] }; // This will track the currently displayed data and it's type
+    SAASData = []
+    HostedData = []
+    AlwaysOnData = []
 
-
-// Handle file selection and parsing
-function handleFileSelect(event) {
-    // Get the selected option value (either "aws" or "other")
-    const selectedAccType = getSelectedAccountType();
-    // console.log(selectedAccType, getToken())
-    // if (selectedAccType === 'rds_app' && !getToken()) {
-    //     event.target.value = '';
-    //     alert('Login first')
-    //     return
-    // }
-
-    // Get the selected date
-    const selectedDate = getSelectedDate();
-    if (!selectedDate) {
-        // If no date is selected, stop further execution
-        event.target.value = '';
-        alert('Please select a date.');
-        return;
-    }
-
-    const file = event.target.files[0];
-    if (!file) return;
-
-
-    resetVales();
-
-    if (selectedAccType === 'aws') {
-        AwsAccParse(file)
-    } else {
-        OtherAccParse(file)
-    }
-
+    awsData = []
+    rdsAppData = []
+    noneData = []
+    mergedData = []
 }
 
 
@@ -51,7 +22,6 @@ function loadOriginalData() {
 
     // Delay the heavy tasks by 1 second
     setTimeout(() => {
-        // populateTable(originalData, 'dataTable'); // Populate the table with the original data
         populateGridTable(originalData, 'dataTable'); // Populate the table with the original data
 
         // Show the download buttons after data is populated
@@ -63,17 +33,65 @@ function loadOriginalData() {
 
 }
 
-// Function to load parsed data into the table
-function loadParsedData() {
+function loadMergedData() {
 
-    currentData.type = 'Parsed Data';
+    currentData.type = `Billing Report - ${getSelectedDate()}`;
 
-    currentData.data = processedData;
+    currentData.data = mergedData;
+
+
     showSpinner()
 
     setTimeout(() => {
-        // populateTable(processedData, 'dataTable');
-        populateGridTable(processedData, 'dataTable')
+        populateGridTable(mergedData, 'mergedDataTable')
+        showDownloadButtons();
+        hideSpinner();
+    }, 1);  // 1 second delay
+
+}
+
+// Function to load parsed data into the table
+function loadAwsData() {
+
+    currentData.type = 'Administrator';
+
+    currentData.data = awsData;
+
+
+    showSpinner()
+
+    setTimeout(() => {
+        populateGridTable(awsData, 'awsDataTable')
+        showDownloadButtons();
+        hideSpinner();
+    }, 1);  // 1 second delay
+
+}
+
+// Function to load parsed data into the table
+function loadRdsAppdData() {
+    currentData.type = 'RDS_APP';
+
+    currentData.data = rdsAppData;
+    showSpinner()
+
+    setTimeout(() => {
+        populateGridTable(rdsAppData, 'rdsAppDataTable')
+        showDownloadButtons();
+        hideSpinner();
+    }, 1);  // 1 second delay
+
+}
+// Function to load parsed data into the table
+function loadNonedData() {
+
+    currentData.type = 'None';
+
+    currentData.data = noneData;
+    showSpinner()
+
+    setTimeout(() => {
+        populateGridTable(noneData, 'noneDataTable')
         showDownloadButtons();
         hideSpinner();
     }, 1);  // 1 second delay
@@ -82,14 +100,13 @@ function loadParsedData() {
 
 // Function to load compared data into the table
 function loadComparedData() {
-    currentData.type = 'Compared Data';  // Track that the original data is loaded
+    currentData.type = 'Compared';  // Track that the original data is loaded
 
     currentData.data = comparedData;  // Track that the original data is loaded
 
     showSpinner()
     setTimeout(() => {
-        // populateTable(comparedData, 'dataTable');
-        populateGridTable(comparedData, 'dataTable');
+        populateGridTable(comparedData, 'awsDataTable');
 
         showDownloadButtons();
         hideSpinner();
@@ -107,7 +124,6 @@ function loadSAASData() {
 
     showSpinner()
     setTimeout(() => {
-        // populateTable(SAASData, 'saasTable');
         populateGridTable(SAASData, 'saasTable')
         showDownloadButtons();
         hideSpinner();
@@ -124,7 +140,6 @@ function loadHostedData() {
 
     showSpinner()
     setTimeout(() => {
-        // populateTable(HostedData, 'hostedTable');
         populateGridTable(HostedData, 'hostedTable');
         showDownloadButtons();
         hideSpinner();
@@ -142,7 +157,7 @@ function loadPivotTableDataForAlwaysOn() {
     var renderers = $.extend($.pivotUtilities.renderers, $.pivotUtilities.export_renderers);
 
     // Apply the pivotUI with the export functionality
-    const table = $(pivotTableElement).pivotUI(processedData, {
+    const table = $(pivotTableElement).pivotUI(awsData, {
         rows: ["Dept", "PM", "Always_On", "Project_Number"],
         // cols: ["Always_On"],           // Columns will be based on Always_On
         aggregatorName: "Sum",           // Aggregator for Cost is Sum
@@ -167,7 +182,7 @@ function loadPivotTableDataForDeptPnPmCost() {
 
     const pivotTableElement = document.getElementById("dept-pn-pm-table");
 
-    $(pivotTableElement).pivotUI(processedData, {
+    $(pivotTableElement).pivotUI(awsData, {
         rows: ["Dept", "PM", "Project_Number"],// Rows will be Dept and Customer
         // cols: ["Always_On"],           // Columns will be based on Always_On
         aggregatorName: "Sum",           // Aggregator for Cost is Sum
