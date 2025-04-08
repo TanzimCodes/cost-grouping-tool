@@ -2249,7 +2249,7 @@ function mikeAlert() {
             // Get the audio element by its ID
             // Set the volume to 50% (0.5)
             const audio = document.getElementById('warning-sound');
-            audio.volume = 0.3;
+            audio.volume = 0.4;
 
 
             // Play the warning sound
