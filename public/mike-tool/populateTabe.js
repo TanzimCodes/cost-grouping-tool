@@ -81,12 +81,12 @@ async function saveReport() {
         return
     }
 
-    // const userDecision = await showOverwriteConfirmation(date);
-    mikeAlert();
+    const userDecision = await overwriteAlert();
 
-
-    // if (userDecision.isConfirmed)
-    //     saveFile(date)
+    if (userDecision.isConfirmed) {
+        stopAudio();
+        saveFile(date)
+    }
 }
 
 async function checkFileStatus(date) {
@@ -99,6 +99,7 @@ async function checkFileStatus(date) {
 }
 
 async function saveFile(date) {
+    showSpinner();
     const url = `${apiBaseUrl}/files`;  // Replace with your API endpoint
     const bodyData = {
         "date": date,
@@ -107,9 +108,6 @@ async function saveFile(date) {
             "awsData": awsData,
             "rdsAppData": rdsAppData,
             "noneData": noneData,
-            "mergedData": mergedData,
-            "SAASData": SAASData,
-            "HostedData": HostedData,
             "comparedData": comparedData
         }
     }
@@ -120,5 +118,7 @@ async function saveFile(date) {
     } catch (error) {
         console.error('Error during POST request:', error);
         errorAlert(`Failed to save the report. ${error.message || 'Please try again later.'}`)
+    } finally {
+        hideSpinner();
     }
 }

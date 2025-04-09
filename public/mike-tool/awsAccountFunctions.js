@@ -40,8 +40,8 @@ function AwsAccParse(file) {
 
                 // Process rest
                 postProcessCustomerData();
-                postProcessSAASData();
-                postProcessHostedData();
+                generateSAASData();
+                generateHostedData();
 
                 // Resolve the promise once parsing is done
                 resolve();
@@ -255,7 +255,7 @@ function CreateDepMapFromCurrentData() {
 }
 
 
-function postProcessSAASData() {
+function generateSAASData() {
     SAASData = awsData.filter((item) => {
         if (item.Dept && (item.Dept === "SAAS-US-IN" || item.Dept === "SAAS-EMEA" || item.Dept === "SAAS-International")) {
             return true; // Return items that match the condition
@@ -264,10 +264,9 @@ function postProcessSAASData() {
             return false; // Filter out items that don't match
         }
     });
-    console.log('SAAS data = > ', SAASData)
 }
 
-function postProcessHostedData() {
+function generateHostedData() {
     HostedData = awsData.filter((item) => {
         if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-International")) {
             return true; // Return items that match the condition

@@ -58,23 +58,6 @@ async function generateReport() {
 
 
 
-
-
-// Function to show the confirmation dialog
-async function showOverwriteConfirmation(date) {
-    return Swal.fire({
-        text: `A report for ${date} was previously generated, do you want to overwrite?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'No'
-    })
-}
-
-
-
-
-
 function loadPreviousReport() {
     const selectedDate = getSelectedDate()
     if (!selectedDate) {

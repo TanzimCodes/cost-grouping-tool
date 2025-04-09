@@ -2154,17 +2154,6 @@ async function loadFileFromServer(date) {
 
 function setValues(data) {
     // Check if data contains the specified keys and set them globally
-    if (data.SAASData) {
-        SAASData = data.SAASData;
-    }
-
-    if (data.HostedData) {
-        HostedData = data.HostedData;
-    }
-
-    if (data.AlwaysOnData) {
-        AlwaysOnData = data.AlwaysOnData;
-    }
 
     if (data.awsData) {
         awsData = data.awsData;
@@ -2178,18 +2167,15 @@ function setValues(data) {
         noneData = data.noneData;
     }
 
-    if (data.mergedData) {
-        mergedData = data.mergedData;
+    if (data.comparedData) {
+        comparedData = data.comparedData;
     }
 
-    // Optionally, log the data that was set (for debugging)
-    console.log('SAASData:', SAASData);
-    console.log('HostedData:', HostedData);
-    console.log('AlwaysOnData:', AlwaysOnData);
-    console.log('awsData:', awsData);
-    console.log('rdsAppData:', rdsAppData);
-    console.log('noneData:', noneData);
-    console.log('mergedData:', mergedData);
+    generateSAASData();
+    generateHostedData();
+
+    mergedData = [...awsData, ...rdsAppData, ...noneData];
+
 }
 
 
@@ -2232,11 +2218,11 @@ function errorAlert(txt) {
     });
 }
 
-function mikeAlert() {
+async function overwriteAlert() {
     //Make if fucking hard for Mike to override 
-    Swal.fire({
+    return Swal.fire({
         title: 'Are you sure you want to overwrite?',
-        text: 'Once you do, there is no going back 🩻',
+        text: 'Once you do, there is no going back ☠️',
         icon: 'warning',
         iconColor: 'red',
         showCancelButton: true,
@@ -2246,30 +2232,27 @@ function mikeAlert() {
             popup: 'my-swal',  // Add a custom class to the popup
         },
         didOpen: () => {
-            // Get the audio element by its ID
-            // Set the volume to 50% (0.5)
-            const audio = document.getElementById('warning-sound');
-            audio.volume = 0.4;
-
-
-            // Play the warning sound
-            document.getElementById("warning-sound").play();
-
-            // Add the flashing effect to the button or alert
-            // document.querySelector('.swal2-confirm').classList.add('flash');
             // Make the overlay flash
             document.querySelector('.swal2-backdrop-show').classList.add('flash');
+            playAudio();
         },
         didClose: () => {
             // Stop the warning sound when the modal closes
-            document.getElementById("warning-sound").pause();
-            document.getElementById("warning-sound").currentTime = 0; // Reset the sound
+            stopAudio();
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Proceed with saving data
-            console.log("Data saved!");
-        }
-    });
+    })
 
+}
+
+function stopAudio() {
+    document.getElementById("warning-sound").pause();
+    document.getElementById("warning-sound").currentTime = 0; // Reset the sound
+}
+function playAudio() {
+    // Get the audio element by its ID
+    // Set the volume to 50% (0.5)
+    const audio = document.getElementById('warning-sound');
+    audio.volume = 0.4;
+    // Play the warning sound
+    document.getElementById("warning-sound").play();
 }
