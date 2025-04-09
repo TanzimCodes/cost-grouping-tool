@@ -186,7 +186,7 @@ app.post('/files', async (req, res) => {
 // Route to load previous data (now handling multiple files in a folder)
 app.get('/files/:date', (req, res) => {
     const date = req.params.date; // e.g "aws-2025-01"
-    const folderPath = path.join(uploadDirectory, date); // Path to the folder for the given date
+    const folderPath = path.join(__dirname, uploadDirectory, date); // Path to the folder for the given date
 
     console.log(folderPath);
 
