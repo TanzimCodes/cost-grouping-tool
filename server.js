@@ -7,6 +7,8 @@ const { chromium } = require('playwright');
 const path = require('path');
 const uploadDirectory = 'storage'
 const port = 443;
+const { mkdir, readdir, unlink, writeFile } = fs.promises;
+
 // Load the SSL certificate and private key
 const options = {
     key: fs.readFileSync(path.join(__dirname, 'SSL', 'Star_Lims_Com_2024_Distribution.key')),
@@ -121,50 +123,122 @@ app.get('/get-token', async (req, res) => {
     }
 });
 
+// Route to check the file status (uploaded or not uploaded)
+app.get('/files/:date/status', async (req, res) => {
+    const folderWithDate = req.params.date;
+    const filePath = path.join(__dirname, uploadDirectory, `${folderWithDate}`);
+
+    const isUploaded = fs.existsSync(filePath);
+
+    return res.status(200).json({ uploaded: isUploaded });
+});
+
 // Route to handle JSON upload (overwrite based on 'overwrite' param)
-app.post('/upload', (req, res) => {
+app.post('/files', async (req, res) => {
+    console.log("hello, trying to save")
     const date = req.body.date; // Date in the format YYYY-MM (e.g., "2025-01")
     const jsonData = req.body.data; // The JSON data to be saved
-    const type = req.body.type; // The JSON data to be saved
-    console.log(type)
 
-    if (!date || !jsonData || !type) {
-        return res.status(400).json({ message: 'Date, data and type are required.' });
+    if (!date || !jsonData) {
+        return res.status(400).json({ message: 'Date and Data are required.' });
     }
 
-    const filePath = path.join(__dirname, uploadDirectory, `${type}-${date}.json`);
+    const folderPath = path.join(__dirname, uploadDirectory, date);
 
+    try {
+        // Create a folder for the given date if it doesn't already exist
+        await mkdir(folderPath, { recursive: true });
 
-    // Save the data to the file (it will overwrite if the file already exists or if overwrite is true)
-    fs.writeFile(filePath, JSON.stringify(jsonData, null, 2), (err) => {
-        if (err) {
-            return res.status(500).json({ message: 'Error saving data.' });
+        // Check if folder exists and delete all files inside it
+        const files = await readdir(folderPath);
+        if (files.length > 0) {
+            for (const file of files) {
+                const filePath = path.join(folderPath, file);
+                await unlink(filePath); // Delete each file inside the folder
+                console.log(`Deleted file: ${filePath}`);
+            }
         }
 
-        res.status(200).json({ message: `Data saved for ${date}.`, filePath });
-    });
+        // Save different types of data to individual files inside the folder
+        for (const key in jsonData) {
+            const dataToSave = jsonData[key];
+
+            // Only save if the array is not empty
+            if (Array.isArray(dataToSave) && dataToSave.length > 0) {
+                const filePath = path.join(folderPath, `${key}.json`);
+
+                // Save the data to the file
+                await writeFile(filePath, JSON.stringify(dataToSave, null, 2));
+                console.log(`Saved ${key} data to ${filePath}`);
+            } else {
+                console.log(`No data for ${key}, skipping save.`);
+            }
+        }
+
+        res.status(200).json({ message: `Data saved for ${date}.`, folderPath });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error saving data.' });
+    }
 });
 
-// Route to load previous data
-app.get('/load/:typeDate', (req, res) => {
-    const date = req.params.typeDate; // e.g "aws-2025-01")
-    const filePath = path.join(uploadDirectory, `${date}.json`);
-    console.log(filePath)
-    // Check if the file exists
-    if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ message: 'Data not found for this month/year.' });
+
+// Route to load previous data (now handling multiple files in a folder)
+app.get('/files/:date', (req, res) => {
+    const date = req.params.date; // e.g "aws-2025-01"
+    const folderPath = path.join(__dirname, uploadDirectory, date); // Path to the folder for the given date
+
+    console.log(folderPath);
+
+    // Check if the folder exists
+    if (!fs.existsSync(folderPath)) {
+        return res.status(404).json({ message: `Report not found for ${date}. Are you sure it's uploaded? 🤔` });
     }
 
-    // Read and send the file content
-    fs.readFile(filePath, 'utf8', (err, data) => {
+    // Read the files in the folder
+    fs.readdir(folderPath, (err, files) => {
         if (err) {
-            return res.status(500).json({ message: 'Error reading data.' });
+            return res.status(500).json({ message: 'Error reading files in the folder.' });
         }
 
-        res.status(200).json(JSON.parse(data)); // Send the parsed JSON data
+        // Filter JSON files in the folder
+        const jsonFiles = files.filter(file => file.endsWith('.json'));
+
+        if (jsonFiles.length === 0) {
+            return res.status(404).json({ message: `Report not found for ${date}. Are you sure it's uploaded? 🤔` });
+        }
+
+        // Read all JSON files and send their content
+        const data = {};
+        let filesRead = 0;
+
+        jsonFiles.forEach((file) => {
+            const filePath = path.join(folderPath, file);
+
+            fs.readFile(filePath, 'utf8', (err, fileData) => {
+                if (err) {
+                    return res.status(500).json({ message: `Error reading file: ${file}` });
+                }
+
+                try {
+                    // Remove the `.json` extension from the filename using path.basename()
+                    const key = path.basename(file, '.json');
+
+                    data[key] = JSON.parse(fileData); // Parse and add the data to the response object
+                } catch (parseError) {
+                    return res.status(500).json({ message: `Error parsing JSON from file: ${file}` });
+                }
+
+                filesRead++;
+
+                // Once all files are read, send the response
+                if (filesRead === jsonFiles.length) {
+                    res.status(200).json(data); // Send the combined data of all JSON files
+                }
+            });
+        });
     });
 });
-
 
 // Create an HTTPS server using the options and Express app
 https.createServer(options, app).listen(port, () => {

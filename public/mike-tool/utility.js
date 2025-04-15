@@ -2128,75 +2128,131 @@ function getSelectedDate() {
     return date ? date : null;
 }
 
-function uploadDataToServer() {
-    // Create the data object
-    const dataObj = {
-        date: getSelectedDate(),
-        data: processedData,  // Assuming processedData is an object or array
-        type: getSelectedAccountType()
-    };
-
-    // Convert the data object to a JSON string
-    const jsonString = JSON.stringify(dataObj);
-
-    // Calculate the size of the JSON string in bytes
-    // const dataSize = new Blob([jsonString]).size;
-    // console.log('Data size in bytes:', dataSize);
-
-    // Making the POST request using fetch
-    fetch(`${apiBaseUrl}/upload`, {
-        method: 'POST',                // Specify the HTTP method
-        headers: {
-            'Content-Type': 'application/json'  // Indicate that you're sending JSON data
-        },
-        body: jsonString     // Convert JavaScript object to JSON string
-    })
-        .then(response => {
-            if (!response.ok) {  // If the response status is not OK (not in the 2xx range)
-                throw new Error(`HTTP error! Status: ${response.status}`);  // Throw error with status
+async function loadFileFromServer(date) {
+    try {
+        // Making the GET request using axios
+        const response = await axios.get(`${apiBaseUrl}/files/${date}`, {
+            headers: {
+                'Content-Type': 'application/json'  // Indicate that you're sending JSON data
             }
-            return response.json();  // Parse the JSON response
-        })
-        .then(data => {
-            console.log('Success:', data);  // Handle the response data
-            loadParsedData()
-
-            setTimeout(() => {
-                alert('Uploaded successfully to server')
-            }, 100);  // Assuming loadParsedData() is defined elsewhere
-        })
-        .catch((error) => {
-            console.error('Error:', error);  // Handle any errors
-            alert('Something went wrong while uploading data to server');
         });
+
+        // Handle successful response
+        console.log('Success:', response.data);  // Handle the response data
+        resetValues();
+
+        setValues(response.data);
+        loadMergedData();
+        SuccessAlert(`🎯 Got it! Report for ${date} is all yours!`);
+
+    } catch (error) {
+        // Handle any errors
+        console.error('Failed to load report', error);
+        errorAlert(`${error.response.data?.message || error}`)
+    }
+}
+
+function setValues(data) {
+    // Check if data contains the specified keys and set them globally
+
+    if (data.awsData) {
+        awsData = data.awsData;
+    }
+
+    if (data.rdsAppData) {
+        rdsAppData = data.rdsAppData;
+    }
+
+    if (data.noneData) {
+        noneData = data.noneData;
+    }
+
+    if (data.comparedData) {
+        comparedData = data.comparedData;
+    }
+
+    generateSAASData();
+    generateHostedData();
+
+    mergedData = [...awsData, ...rdsAppData, ...noneData];
+
 }
 
 
-function loadDataFromServer(date) {
-    // Making the POST request using fetch
-    fetch(`${apiBaseUrl}/load/${date}`, {
-        method: 'GET',                // Specify the HTTP method
-        headers: {
-            'Content-Type': 'application/json'  // Indicate that you're sending JSON data
+function forgetDateDialogue() {
+    Swal.fire({
+        title: 'Forgot something? ',
+        text: 'Like picking a date? 💁',
+        icon: 'warning',
+        confirmButtonText: 'Okay'
+    });
+}
+
+function missingFileUploadDialogue() {
+    // Check if all the required files are uploaded
+    Swal.fire({
+        text: 'Please upload atleast one of the files (Administrator, APP/RDS, None).',
+        icon: 'warning',
+        confirmButtonText: 'Okay'
+    });
+    return;
+}
+
+// Success function
+function SuccessAlert(title, text) {
+    Swal.fire({
+        title: title,
+        text: text,
+        icon: 'success',  // Success icon
+        confirmButtonText: 'Okay'
+    });
+}
+
+// Failure function
+function errorAlert(txt) {
+    Swal.fire({
+        title: 'Failed!',
+        text: txt,
+        icon: 'error',  // Error icon
+        confirmButtonText: 'Okay'
+    });
+}
+
+async function overwriteAlert() {
+    //Make if fucking hard for Mike to override 
+    return Swal.fire({
+        title: 'Are you sure you want to overwrite?',
+        text: 'Once you do, there is no going back ☠️',
+        icon: 'warning',
+        iconColor: 'red',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, overwrite it!',
+        cancelButtonText: 'Nope, I\'m out',
+        customClass: {
+            popup: 'my-swal',  // Add a custom class to the popup
+        },
+        didOpen: () => {
+            // Make the overlay flash
+            document.querySelector('.swal2-backdrop-show').classList.add('flash');
+            playAudio();
+        },
+        didClose: () => {
+            // Stop the warning sound when the modal closes
+            stopAudio();
         }
     })
-        .then(response => {
-            if (!response.ok) {  // If the response status is not OK (not in the 2xx range)
-                return response.json()  // Parse the error response body as JSON
-                    .then(errorData => {
-                        throw new Error(`Error: ${errorData.message}`);  // Throw the error with response body
-                    });
-            }
-            return response.json();  // Parse the JSON response
-        })
-        .then(data => {
-            console.log('Success:', data);  // Handle the response data
-            resetVales();
-            processedData = data
-            setTimeout(() => loadParsedData(), 100);
-        })
-        .catch((error) => {
-            console.error('Error:', error);  // Handle any errors
-            alert(error.message);
-        });
+
+}
+
+function stopAudio() {
+    document.getElementById("warning-sound").pause();
+    document.getElementById("warning-sound").currentTime = 0; // Reset the sound
+}
+function playAudio() {
+    // Get the audio element by its ID
+    // Set the volume to 50% (0.5)
+    const audio = document.getElementById('warning-sound');
+    audio.volume = 0.4;
+    // Play the warning sound
+    document.getElementById("warning-sound").play();
 }
