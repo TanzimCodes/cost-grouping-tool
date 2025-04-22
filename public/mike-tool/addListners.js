@@ -161,4 +161,3 @@ function storeDataInMemory(event) {
         skipEmptyLines: true, // Skip any empty lines
     });
 }
-

@@ -10,7 +10,7 @@ let noneData = []
 let mergedData = []
 
 // Check if the page is served locally or from the server
-let apiBaseUrl = `https://${window.location.hostname}`;
+const apiBaseUrl = `https://${window.location.hostname}`;
 
 
 let storedData = new Map();

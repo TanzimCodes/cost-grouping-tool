@@ -13,25 +13,6 @@ function resetValues() {
 }
 
 
-// Function to load original data into the table
-function loadOriginalData() {
-    currentData.type = 'Original-data';  // Track that the original data is loaded
-
-    currentData.data = originalData;  // Track that the original data is loaded
-    showSpinner()
-
-    // Delay the heavy tasks by 1 second
-    setTimeout(() => {
-        populateGridTable(originalData, 'dataTable'); // Populate the table with the original data
-
-        // Show the download buttons after data is populated
-        showDownloadButtons();
-
-        // Hide the spinner after tasks are done
-        hideSpinner();
-    }, 1);  // 1 second delay
-
-}
 
 function loadMergedData() {
 

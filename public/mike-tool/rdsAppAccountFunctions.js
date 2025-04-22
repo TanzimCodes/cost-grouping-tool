@@ -199,6 +199,14 @@ const devOpsSet = new Set([
 ]
 )
 
+function padProjectNumber(pn) {
+    if (pn && pn !== 'DevOps') {
+        return pn.toString().padStart(6, '0');
+    }
+    return pn;
+}
+
+
 const customerSet = new Map([
     ['name', 'John Doe'],
     ['age', 30],
@@ -206,8 +214,7 @@ const customerSet = new Map([
 ]);
 
 function transformP2(tempData) {
-    console.log('transformP2 incoming data ', tempData)
-
+    console.log(tempData)
     const transformedData = [];
 
     tempData.forEach(item => {
@@ -221,7 +228,8 @@ function transformP2(tempData) {
         };
 
         const cost = item.Cost;
-        if (item.Account.includes('RDS')) {
+
+        if (item.Account.startsWith('RDS')) {
 
             //If RDS has APP
             if (item.app_accounts.length) {
@@ -239,20 +247,20 @@ function transformP2(tempData) {
                         "Cost": 0,
                     };
 
-
+                    //This is internal app, not SAAS
                     if (devOpsSet.has(AppAccount.Customer)) {
                         AppAccount.Project_Number = 'DevOps'
                         AppAccount.Customer = 'Labvantage'
                         obj2.Dept = 'Engineering'
                         obj2.PM = 'DevOps'
-                        //Espcial rule
-                    } else if (AppAccount.Project_Number === 'lvintsaas2') {
-                        AppAccount.Customer = 'Labvantage'
-                        obj2.Dept = 'SAAS-US-IN'
-                        obj2.PM = 'Cvandra'
+                        //Espcial rule this SAAS
+                    } else {
+                        //this is a SAAS customer
+                        obj2.PM = 'CloudOps'
+                        AppAccount.Customer = AppAccount.Customer.includes('Labvantage') ? 'Labvantage' : AppAccount.Customer
                     }
 
-                    obj2.Project_Number = `${AppAccount.Account} - DB Usage (${item.Account})(${AppAccount.Project_Number})`;
+                    obj2.Project_Number = `${AppAccount.Account} - DB Usage (${item.Account})(${padProjectNumber(AppAccount.Project_Number)})`;
                     obj2.Customer = AppAccount.Customer;
                     obj2.Cost = parseFloat(costEachApp.toFixed(3));
 
@@ -274,37 +282,51 @@ function transformP2(tempData) {
 
 
 
-        } else if (item.Account.includes('App')) {
+        } else if (item.Account.startsWith('App')) {
+
+            if (item.Account.includes('LabvantageApplications'))
+                console.log('At APP ', item)
+
             //For App accounts only
             if (devOpsSet.has(item.Customer) || item.Customer === 'ghost') {
                 item.Project_Number = 'DevOps'
                 item.Customer = 'Labvantage'
                 obj.Dept = 'Engineering'
                 obj.PM = 'DevOps'
-            } else if (item.Project_Number === 'lvintsaas2') {
-                item.Customer = 'Labvantage'
-                obj.Dept = 'SAAS-US-IN'
-                obj.PM = 'Cvandra'
+            } else {
+                //this is a SAAS customer
+                obj.PM = 'CloudOps'
+                item.Customer = item.Customer.includes('Labvantage') ? 'Labvantage' : item.Customer
             }
 
 
-            obj.Project_Number = `${item.Account}(${item.Project_Number})`;
+            obj.Project_Number = `${item.Account}(${padProjectNumber(item.Project_Number)})`;
             obj.Cost = cost;
             obj.Customer = item.Customer;
 
             transformedData.push(obj);  // Shallow clone here
 
         } else {
-            //For anothing else
-            obj.Project_Number = `${item.Account}(DevOps)`;
-            obj.Cost = cost
+            //These are neither RDS nor APP accounts
+            //These have no ibm mapping
+            const devOpsArr = ['EDB POC', 'DevSecOpsSandbox']
 
+            obj.Dept = devOpsArr.includes(item.Account) ? 'Engineering' : 'Allocation'
+            obj.PM = devOpsArr.includes(item.Account) ? 'DevOps' : 'Allocation'
+            obj.Project_Number = `${item.Account}`;
+            obj.Cost = cost
+            obj.Customer = 'Labvantage';
+
+            //Now for the outliers
+            if (item.Account === 'LabvantageWebsiteProduction') {
+                obj.Dept = 'Marketing'
+                obj.PM = 'AMarcus'
+            }
             transformedData.push(obj);
         }
 
     });
 
-    console.log('transformP2 transformed data ', transformedData)
 
     return transformedData; // Return the transformed data
 }

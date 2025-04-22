@@ -6,12 +6,8 @@ function NoneAccParse(file) {
             step: function (results, parser) {
                 let row = results.data;  // results.data is an array of objects
 
-                // Check if headers are valid
-                // if (!validateHeaders(results.meta.fields)) {
-                //     reject(new Error("None File has invalid"));
-                //     parser.abort();  // Abort parsing if headers are incorrect
-                //     return;
-                // }
+                //TODO: Check if headers are valid
+ 
 
                 // Stop if the row is blank
                 if (isEmptyRow(row)) {
@@ -77,5 +73,6 @@ function processRowForNoneAcc(row) {
     row[1] = parseFloat(row[1].replace('$', '').replace(',', ''));
     // If Cost is valid, continue processing the row
     // You can add any other processing here if necessary
+    // console.log(row)
     return row;
 }
