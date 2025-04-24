@@ -256,26 +256,43 @@ function CreateDepMapFromCurrentData() {
 
 
 function generateSAASData() {
-    SAASData = awsData.filter((item) => {
-        if (item.Dept && (item.Dept === "SAAS-US-IN" || item.Dept === "SAAS-EMEA" || item.Dept === "SAAS-International")) {
-            return true; // Return items that match the condition
-        } else if (item.Dept.startsWith('SAAS')) {
-            // console.log("Non-SAAS item:", item); // Log items that don't match
-            return false; // Filter out items that don't match
-        }
-    });
+    const filterSAASItems = (data) => {
+        return data.filter((item) => {
+            if (item.Dept && (item.Dept === "SAAS-US-IN" || item.Dept === "SAAS-EMEA" || item.Dept === "SAAS-International")) {
+                return true;
+            } else if (item.Dept && item.Dept.startsWith('SAAS')) {
+                return false;
+            }
+        });
+    };
+
+    const filteredAWS = filterSAASItems(awsData);
+    const filteredRDS = filterSAASItems(rdsAppData);
+    const filteredNone = filterSAASItems(noneData);
+
+    // Combine all filtered data into one array
+    SAASData = [...filteredAWS, ...filteredRDS, ...filteredNone];
 }
 
 function generateHostedData() {
-    HostedData = awsData.filter((item) => {
-        if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-International")) {
-            return true; // Return items that match the condition
-        } else if (item.Dept.startsWith('Hosted')) {
-            // console.log("Non-Hosted item:", item); // Log items that don't match
-            return false; // Filter out items that don't match
-        }
-    });
+    const filterHostedItems = (data) => {
+        return data.filter((item) => {
+            if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-International")) {
+                return true;
+            } else if (item.Dept && item.Dept.startsWith('Hosted')) {
+                return false;
+            }
+        });
+    };
+
+    const filteredAWS = filterHostedItems(awsData);
+    const filteredRDS = filterHostedItems(rdsAppData);
+    const filteredNone = filterHostedItems(noneData);
+
+    // Combine all filtered data into one array
+    HostedData = [...filteredAWS, ...filteredRDS, ...filteredNone];
 }
+
 
 // Function to check if a row is blank (empty or containing only blank fields or spaces)
 function isEmptyRow(row) {

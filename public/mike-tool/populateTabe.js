@@ -49,6 +49,10 @@ function populateGridTable(data, grid_id) {
         // If AG Grid is initialized, update the data
         gridMap.get(grid_id).setGridOption('rowData', data);
         gridMap.get(grid_id).setGridOption('columnDefs', colDefs);
+        gridMap.get(grid_id).setGridOption('defaultExcelExportParams', {
+            exportAsExcelTable: true,
+            fileName: `${currentData.type}.xlsx`
+        });
 
     } else {
         const gridOptions = {

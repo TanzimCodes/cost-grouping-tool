@@ -160,26 +160,43 @@ function groupByDeptAndAggregateCosts(data) {
 
 
 function generateSAASData() {
-    SAASData = awsData.filter((item) => {
-        if (item.Dept && (item.Dept === "SAAS-US-IN" || item.Dept === "SAAS-EMEA" || item.Dept === "SAAS-International")) {
-            return true; // Return items that match the condition
-        } else if (item.Dept.startsWith('SAAS')) {
-            // console.log("Non-SAAS item:", item); // Log items that don't match
-            return false; // Filter out items that don't match
-        }
-    });
+    const filterSAASItems = (data) => {
+        return data.filter((item) => {
+            if (item.Dept && (item.Dept === "SAAS-US-IN" || item.Dept === "SAAS-EMEA" || item.Dept === "SAAS-International")) {
+                return true;
+            } else if (item.Dept && item.Dept.startsWith('SAAS')) {
+                return false;
+            }
+        });
+    };
+
+    const filteredAWS = filterSAASItems(awsData);
+    const filteredRDS = filterSAASItems(rdsAppData);
+    const filteredNone = filterSAASItems(noneData);
+
+    // Combine all filtered data into one array
+    SAASData = [...filteredAWS, ...filteredRDS, ...filteredNone];
 }
 
 function generateHostedData() {
-    HostedData = awsData.filter((item) => {
-        if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-International")) {
-            return true; // Return items that match the condition
-        } else if (item.Dept.startsWith('Hosted')) {
-            // console.log("Non-Hosted item:", item); // Log items that don't match
-            return false; // Filter out items that don't match
-        }
-    });
+    const filterHostedItems = (data) => {
+        return data.filter((item) => {
+            if (item.Dept && (item.Dept === "Hosted-US-IN" || item.Dept === "Hosted-EMEA" || item.Dept === "Hosted-International")) {
+                return true;
+            } else if (item.Dept && item.Dept.startsWith('Hosted')) {
+                return false;
+            }
+        });
+    };
+
+    const filteredAWS = filterHostedItems(awsData);
+    const filteredRDS = filterHostedItems(rdsAppData);
+    const filteredNone = filterHostedItems(noneData);
+
+    // Combine all filtered data into one array
+    HostedData = [...filteredAWS, ...filteredRDS, ...filteredNone];
 }
+
 
 // Event listener for tab change
 document.querySelectorAll('.nav-link').forEach(tab => {
@@ -207,9 +224,9 @@ document.querySelectorAll('.nav-link').forEach(tab => {
 
 function loadMergedData() {
 
-    // currentData.type = `Billing Report - ${getSelectedDate()}`;
+    currentData.type = `Billing Report - ${getSelectedDate()}`;
 
-    // currentData.data = mergedData;
+    currentData.data = mergedData;
 
 
     showSpinner()
@@ -224,9 +241,9 @@ function loadMergedData() {
 // Function to load parsed data into the table
 function loadAwsData() {
 
-    // currentData.type = 'Administrator';
+    currentData.type = 'Administrator';
 
-    // currentData.data = awsData;
+    currentData.data = awsData;
 
 
     showSpinner()
@@ -241,9 +258,9 @@ function loadAwsData() {
 
 // Function to load parsed data into the table
 function loadRdsAppdData() {
-    // currentData.type = 'RDS_APP';
+    currentData.type = 'RDS_APP';
 
-    // currentData.data = rdsAppData;
+    currentData.data = rdsAppData;
     showSpinner()
 
     setTimeout(() => {
@@ -256,9 +273,9 @@ function loadRdsAppdData() {
 // Function to load parsed data into the table
 function loadNonedData() {
 
-    // currentData.type = 'None';
+    currentData.type = 'None';
 
-    // currentData.data = noneData;
+    currentData.data = noneData;
 
     showSpinner()
 
@@ -272,9 +289,9 @@ function loadNonedData() {
 
 // Function to load compared data into the table
 function loadComparedData() {
-    // currentData.type = 'Compared';  // Track that the original data is loaded
+    currentData.type = 'Compared';  // Track that the original data is loaded
 
-    // currentData.data = comparedData;  // Track that the original data is loaded
+    currentData.data = comparedData;  // Track that the original data is loaded
 
     showSpinner()
     setTimeout(() => {
@@ -290,9 +307,9 @@ function loadComparedData() {
 
 // Function to load compared data into the table
 function loadSAASData() {
-    // currentData.type = 'SAAS';  // Track that the original data is loaded
+    currentData.type = 'SAAS';  // Track that the original data is loaded
 
-    // currentData.data = SAASData;  // Track that the original data is loaded
+    currentData.data = SAASData;  // Track that the original data is loaded
 
     showSpinner()
     setTimeout(() => {
@@ -306,9 +323,9 @@ function loadSAASData() {
 
 // Function to load compared data into the table
 function loadHostedData() {
-    // currentData.type = 'Hosted';  // Track that the original data is loaded
+    currentData.type = 'Hosted';  // Track that the original data is loaded
 
-    // currentData.data = HostedData;  // Track that the original data is loaded
+    currentData.data = HostedData;  // Track that the original data is loaded
 
     showSpinner()
     setTimeout(() => {
@@ -391,6 +408,10 @@ function populateGridTable(data, grid_id) {
         // If AG Grid is initialized, update the data
         gridMap.get(grid_id).setGridOption('rowData', data);
         gridMap.get(grid_id).setGridOption('columnDefs', colDefs);
+        gridMap.get(grid_id).setGridOption('defaultExcelExportParams', {
+            exportAsExcelTable: true,
+            fileName: `${currentData.type}.xlsx`
+        });
 
     } else {
         const gridOptions = {
@@ -428,4 +449,10 @@ function resetValues() {
     rdsAppData = []
     noneData = []
     mergedData = []
+}
+
+// Function to get the selected month/year from the date picker
+function getSelectedDate() {
+    const date = document.getElementById('reportDateSelect').value;
+    return date ? date : null;
 }

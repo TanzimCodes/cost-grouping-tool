@@ -15,7 +15,6 @@ function resetValues() {
 
 
 function loadMergedData() {
-
     currentData.type = `Billing Report - ${getSelectedDate()}`;
 
     currentData.data = mergedData;
