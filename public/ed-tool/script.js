@@ -16,7 +16,7 @@ let currentData = []
 // })
 
 // Check if the page is served locally or from the server
-let apiBaseUrl = `https://${window.location.hostname}`;
+const apiBaseUrl = `https://${window.location.hostname}`;
 
 
 document.getElementById('fetch-data').addEventListener('click', () => {
@@ -86,7 +86,8 @@ async function executeNormalQuery(params) {
     const tableData = transformApiData(data)
     currentData = tableData.data;
 
-    // updateTable(tableData)
+    console.log(currentData)
+
     updateTableWithAGGrid(tableData)
 
   } catch (error) {
@@ -238,63 +239,22 @@ function transformDropDownValues(requestData) {
 
 
 
-// Update table with response data
-function updateTableWithTabulator({ headerValues, data, dimensionValueAttributes }) {
-
-  // Prepare data for Tabulator
-  const formattedData = data.map(item => ({
-    month: item.month,
-    group1: item.group1,
-    group2: item.group2,
-    cost: item.cost
-  }));
-
-  // Define column definitions for AG Grid
-  const columnDefs = [
-    { headerName: "Month", field: "month" },
-    { headerName: headerValues[0] || 'Group 1', field: "group1" },
-    { headerName: headerValues[1] || 'Group 2', field: "group2" },
-    { headerName: "Cost (USD)", field: "cost", valueFormatter: params => `$${params.value.toFixed(2)}` }
-  ];
-
-  // Check if Tabulator is already initialized
-  if (window.tabulatorInstance) {
-    // If it is, update the data
-    window.tabulatorInstance.setData(formattedData);
-  } else {
-    // If not, initialize Tabulator
-    window.tabulatorInstance = new Tabulator("#tabulator-table", {
-      data: formattedData, // Set the initial data
-      columns: columnDefs,
-      pagination: "local", // Enable pagination
-      paginationSize: 30, // Number of rows per page
-      paginationSizeSelector: [10, 30, 50], // Options for pagination size
-      layout: "fitColumns", // Automatically adjust column width to fit content
-      tooltips: true, // Show tooltips for cells
-      responsiveLayout: "hide", // Hide columns on smaller screens
-      initialSort: [
-        { column: "month", dir: "asc" }
-      ], // Optional: Sort by month
-      stickyHeader: true
-    });
-  }
-}
-
 function updateTableWithAGGrid({ headerValues, data, dimensionValueAttributes }) {
 
   // Define column definitions for AG Grid
   const columnDefs = [
-    { headerName: "Month", field: "month" },
-    { headerName: headerValues[0] || 'Group 1', field: headerValues[0], filter: true },
-    { headerName: headerValues[1] || 'Group 2', field: headerValues[1], filter: true },
+    { headerName: "Month", field: "month", enableRowGroup: true },
+    { headerName: headerValues[0] || 'Group 1', field: headerValues[0], filter: true, enableRowGroup: true },
+    { headerName: headerValues[1] || 'Group 2', field: headerValues[1], filter: true, enableRowGroup: true },
     {
-      headerName: "Cost (USD)",
+      headerName: "Cost",
       field: "cost",
       filter: true,
       valueGetter: (params) => {
         // Convert cost to number if it's not already
         return parseFloat(params.data.cost) || 0;
-      }
+      },
+      aggFunc: 'sum' // This will sum costs in group rows
     }
   ];
 
@@ -311,7 +271,8 @@ function updateTableWithAGGrid({ headerValues, data, dimensionValueAttributes })
       rowData: data, // Set the data
       pagination: true, // Enable pagination
       paginationPageSize: 30, // Set default number of rows per page
-      paginationPageSizeSelector: [10, 30, 50], // Options for pagination size
+      paginationPageSizeSelector: [50, 100, 150], // Options for pagination size
+      rowGroupPanelShow: 'always',
     };
 
     // Initialize AG Grid

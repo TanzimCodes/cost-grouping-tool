@@ -240,6 +240,35 @@ app.get('/files/:date', (req, res) => {
     });
 });
 
+app.get('/files', (req, res) => {
+    const folderPath = path.join(__dirname, uploadDirectory);
+
+    fs.readdir(folderPath, (err, files) => {
+        if (err) {
+            console.error('Error reading directory:', err);
+            return res.status(500).json({ error: 'Failed to read directory' });
+        }
+
+        // Filter only directories
+        const folders = [];
+        let pending = files.length;
+        if (!pending) return res.json(folders); // Empty directory
+
+        files.forEach(file => {
+            const fullPath = path.join(folderPath, file);
+            fs.stat(fullPath, (err, stat) => {
+                if (stat && stat.isDirectory()) {
+                    folders.push(file);
+                }
+
+                if (!--pending) {
+                    res.json(folders);
+                }
+            });
+        });
+    });
+});
+
 // Create an HTTPS server using the options and Express app
 https.createServer(options, app).listen(port, () => {
     console.log(`Server running at https://localhost:${port}/`);

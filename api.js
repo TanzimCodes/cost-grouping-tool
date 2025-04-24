@@ -1,8 +1,16 @@
 const { CostExplorerClient, GetCostAndUsageCommand } = require("@aws-sdk/client-cost-explorer");
 const fs = require('fs');  // Import the fs module to write to a file
 
+require('dotenv').config(); // Load .env into process.env
+
 // Initialize the Cost Explorer client
-const client = new CostExplorerClient({ region: 'us-east-1' });
+const client = new CostExplorerClient({
+    region: 'us-east-1',
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
+  });
 
 // Function to query AWS Cost Explorer for a suspicious tag and return the response
 const queryCostExplorer = async (req, res) => {
@@ -16,7 +24,6 @@ const queryCostExplorer = async (req, res) => {
     } else if (FilterValArray.length === 1) {
         filter = FilterValArray[0]; // Use the single filter directly if only one value
     }
-
     // Construct parameters for the AWS SDK request
     const params = {
         TimePeriod: {
